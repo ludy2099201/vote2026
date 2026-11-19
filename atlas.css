@@ -1,0 +1,85 @@
+:root{--ink:#153f38;--line:#d5ddd4;--paper:#f4f5ef;--color-indigo-50:#eef5ec;--color-indigo-100:#dbe9dc;--color-indigo-200:#b5cfbf;--color-indigo-300:#8bb29f;--color-indigo-500:#418774;--color-indigo-600:#286757;--color-indigo-700:#20584c;--color-indigo-800:#18493d;--color-indigo-900:#183f36;--color-slate-900:#1c3731;--color-slate-950:#122f29;--color-slate-200:#d9e0d8}
+body{background:var(--paper);font-family:system-ui,"PingFang TC","Microsoft JhengHei",sans-serif}
+main.max-w-7xl,header>.max-w-7xl,footer.max-w-7xl,#global-filter-bar>.max-w-7xl{max-width:78rem}
+#global-header{box-shadow:none;background:#fffffb}
+#global-header h1{font-family:Georgia,"Songti TC",serif;font-size:1.34rem;letter-spacing:.045em}
+#global-header h1 span{font:italic 1rem Georgia;color:#637c61}
+#global-header nav{gap:10px;padding:0;scrollbar-width:thin}
+#global-header nav button{padding:12px 8px;border:none;border-bottom:3px solid transparent;border-radius:0;font-size:.9rem}
+#global-header nav [aria-current]{background:transparent;border-color:var(--ink);color:var(--ink)}
+#global-header [aria-hidden].h-9{border-radius:50%;background:var(--ink);font-size:1.65rem}
+#btn-open-quiz-top,#btn-open-compare-top{display:none}
+#view-quiz{padding-top:4px}
+.atlas-hero{position:relative;isolation:isolate;overflow:hidden;border-radius:16px;background:#174a40;color:#faf7e9}
+.atlas-hero:before{content:"";position:absolute;inset:0;z-index:-1;background:url('./compass.svg') right center / auto 116% no-repeat;mask-image:linear-gradient(90deg,transparent 12%,black 54%)}
+.atlas-copy{padding:28px clamp(22px,4vw,56px) 32px}
+.atlas-copy p{display:flex;align-items:center;gap:12px;color:#e6d8b0;font:600 .78rem/1.5 ui-monospace,monospace;letter-spacing:.17em}
+.atlas-copy i{width:32px;height:1px;background:#a8ab84}
+.atlas-copy h2{font:bold clamp(34px,3.7vw,52px)/1.14 Georgia,"Noto Serif CJK TC","Songti TC",serif;letter-spacing:.06em;margin:12px 0}
+.atlas-copy>div{font-size:1rem;line-height:1.65;color:#dde9df}
+#view-quiz>div:nth-child(2){margin:18px 0;padding:0}
+#quiz-step-pills button{border-radius:50%;font-weight:700}
+#quiz-questions-container article,.scope-card,#quiz-results-container>aside,#quiz-results-container>div{background:#fffefa;border:1px solid var(--line);border-radius:14px;box-shadow:none;padding:clamp(18px,2vw,28px)}
+#quiz-questions-container h3{font:700 clamp(1.18rem,1.6vw,1.42rem)/1.55 Georgia,"Songti TC",serif}
+#quiz-questions-container article>div.grid>div{background:#fafbf6;border-radius:10px}
+#quiz-questions-container article>div.grid>div:has(button:hover),#quiz-questions-container article>div.grid>div:has([aria-pressed=true]){background:#ecf4ec;border-color:#779d86}
+#quiz-questions-container button>span.flex-1{font-size:1rem}
+#quiz-questions-container details,#quiz-results-container aside p,.scope-card label,.scope-card select{font-size:.875rem;line-height:1.65}
+.scope-card select{appearance:auto;padding:9px;background:#f6f8f3}
+#quiz-results-container aside{border-top:3px solid #809a71}
+footer{margin-top:16px;font-size:.8rem!important}
+@media(max-width:700px){.atlas-copy{padding:19px}.atlas-hero:before{background-size:auto 76%;background-position:calc(100% + 49px) -10px;mask-image:linear-gradient(90deg,transparent 35%,black 74%)}.atlas-copy>div{max-width:88%;font-size:.92rem}.wide-break{display:none}#global-header nav{gap:0}#global-header nav button{font-size:.84rem}.atlas-copy h2{font-size:2rem}#quiz-step-pills{max-width:calc(100vw - 172px)}#view-quiz>div:nth-child(2){margin:14px 0}.report-column{min-width:0}}
+
+.audit-notice{background:#fff7e5;border:1px solid #dec48e;border-radius:10px;color:#533a0c;padding:12px 16px;margin-bottom:16px;font-size:.9rem;line-height:1.6}
+.gender-badge{display:inline-block;font-size:.75rem;font-weight:700;padding:2px 8px;border:1px solid;border-radius:5px;white-space:nowrap}
+.gender-male{color:#4d3e87;background:#f1effb;border-color:#c2b9df}
+.gender-female{color:#883d60;background:#fbecf2;border-color:#dfb7c9}
+.gender-unknown{color:#5c6661;background:#f1f3f1;border-color:#cfd6d1}
+
+.ocr-evidence{background:#f1f7f1;border:1px solid #bed2bf;border-radius:12px;padding:16px;margin:16px 0;color:#203f34;font-size:.9rem;line-height:1.7}
+.ocr-evidence h4{font-size:1rem;font-weight:750}.ocr-evidence p{margin-top:3px}.ocr-evidence ul{list-style:disc;margin:8px 0 8px 1.25rem}.ocr-evidence a{text-decoration:underline;font-weight:700}
+
+/* The compass cover, question sheet and result share one editorial palette. */
+.atlas-hero{background:linear-gradient(110deg,#0c352e,#1b5146 62%,#356354);border:1px solid #244e42;box-shadow:0 8px 24px #1e493516}
+.atlas-copy{padding-block:clamp(24px,3vw,42px)}
+.atlas-copy h2{letter-spacing:.025em;line-height:1.24}
+.atlas-enter{margin-top:18px;border:1px solid #e7dbb8;background:#f4e8c7;color:#193d32;padding:10px 22px;font-weight:750;border-radius:100px}
+.atlas-enter:hover{background:#fff6dd}
+#view-quiz :is(button,summary,select):focus-visible{outline:3px solid #b47c25;outline-offset:3px}
+#quiz-questions-container h3,#quiz-match-title{scroll-margin-top:9rem}
+#quiz-questions-container article{border-top:4px solid #487663;box-shadow:0 5px 18px #193f3110}
+#quiz-questions-container article>div.grid>div{transition:background-color .16s,border-color .16s}
+#quiz-questions-container article>div.grid>div:has([aria-pressed=true]){box-shadow:inset 3px 0 #286454}
+#quiz-step-pills button[aria-current]{outline:1px solid #286454;outline-offset:1px}
+#quiz-results-container>.match-result{color:#183e33;background:linear-gradient(145deg,#e5eee1,#faf9ed);border:1px solid #aebfa8;border-top:4px solid #916d35;border-radius:16px;padding:clamp(18px,2vw,30px)}
+.match-result h3{font-family:Georgia,"Songti TC",serif;line-height:1.45}
+.match-result article{background:#fffef9;border:1px solid #c8d3c4;border-radius:10px}
+.match-result article button{text-underline-offset:4px}
+.match-result>button{background:#205347;color:white;border-radius:100px;padding:10px 18px}
+#quiz-results-container>*+*{margin-top:16px}
+@media(max-width:700px){
+  .atlas-hero:before{opacity:.6;background-position:calc(100% + 60px) 10%;mask-image:linear-gradient(90deg,transparent 44%,black)}
+  .atlas-copy>div{max-width:90%}
+  #view-quiz>div:nth-child(2){align-items:flex-start}
+  #quiz-step-pills{max-width:min(59vw,26rem);padding:4px}
+  #quiz-questions-container article>div.grid>div>button{padding-block:12px}
+}
+@media(prefers-reduced-motion:reduce){#view-quiz *,#view-quiz *::before{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+.quiz-storage{padding:12px 16px;border:1px solid var(--line);border-radius:12px;background:#fffefa}
+.quiz-storage summary{cursor:pointer;font-weight:700}
+.quiz-storage p,.quiz-rule{margin-top:8px}
+#quiz-step-pills .quiz-step-button{min-width:44px;height:44px;flex:none}
+#quiz-step-pills{padding:4px;scrollbar-width:thin}
+.quiz-axis-values{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;font-size:.875rem}
+.quiz-axis-values li{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;background:#eef5ec;padding:8px;border-radius:8px}
+
+#global-filter-bar[hidden]{display:none!important}
+#quiz-method{scroll-margin-top:9rem}
+#quiz-method ol{list-style:decimal;padding-left:1.5rem;margin-top:12px;font-size:.9rem}
+#quiz-method li+li{margin-top:8px}
+.quiz-entry-scope{max-width:30rem;margin-top:1rem}
+.quiz-entry-scope label,.quiz-entry-scope select{font-size:1rem}
+.quiz-entry-scope label{color:#fff4d5}
+#quiz-scope-roster{font-size:.875rem;margin-top:6px}
+#view-matrix .overflow-x-auto:before{content:"表格可左右滑動";display:block;font-size:.875rem;padding:8px;color:#23463b}
