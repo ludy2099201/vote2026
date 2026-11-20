@@ -1866,7 +1866,7 @@
   </section>
 
   <!-- Main Workspace Container -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5"><div class="audit-notice" role="note"><strong>資料核對進行中</strong> 候選人政見摘要、數值與配對模型尚未完成逐筆核對。閱讀或比較時，請開啟各縣市選舉公報確認原文。</div>
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5"><div class="audit-notice" role="note"><strong>資料核對進行中</strong> 候選人政見摘要與數值尚未完成逐筆核對。閱讀或比較時，請開啟各縣市選舉公報確認原文。</div>
 
     <!-- ==========================================
          VIEW 1: CROSS-CITY ISSUE HORIZONTAL MATRIX
@@ -1932,7 +1932,7 @@
         <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-2">
             <h3 class="text-sm font-bold text-slate-800" id="matrix-table-title">跨縣市政見橫向比較矩陣</h3>
-            <span class="text-xs text-slate-500 font-mono-code" id="matrix-table-subtitle">點擊任一候選人可開啟「六維政策雷達與公報原文剖析」</span>
+            <span class="text-xs text-slate-500 font-mono-code" id="matrix-table-subtitle">點擊任一候選人可開啟「政見資料與來源」</span>
           </div>
           <div class="flex items-center gap-2">
             <button type="button" onclick="exportFilteredCSV()" class="px-2.5 py-1 rounded border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-100">
@@ -1964,7 +1964,7 @@
           <div>
             <h2 class="text-base sm:text-lg font-bold text-slate-900">全台候選人二維政策光譜座標 (2D Policy Spectrum Coordinates)</h2>
             <p class="text-xs text-slate-600 mt-0.5">
-              以人工整理的政策分類與數值編碼呈現相對位置（非客觀測量、民調或優劣評分）。點擊座標點可檢視右側六項議題摘要涵蓋雷達與同縣市候選人的相對位置。
+              以人工整理的政策分類與數值編碼呈現相對位置（非客觀測量、民調或優劣評分）。點擊座標點可檢視右側六項議題資料與同縣市候選人的相對位置。
             </p>
           </div>
 
@@ -2039,7 +2039,7 @@
           <div>
             <h2 class="text-base sm:text-lg font-bold text-slate-900">跨縣市候選人並排對照工作台（最多 6 人）</h2>
             <p class="text-xs text-slate-600 mt-0.5">
-              可自由組合不同縣市或同選區之候選人，並排比對六大議題承諾、量化津貼與政策雷達重疊圖。
+              可自由組合不同縣市或同選區之候選人，並排比對六大議題承諾及量化津貼。
             </p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
@@ -2075,9 +2075,9 @@
       <!-- Overlaid Radar + Mini Spectrum for Pinned Candidates -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
         <div class="lg:col-span-5 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-          <h3 class="text-sm font-bold text-slate-900 mb-2">已釘選候選人：六維政策重心重疊雷達圖</h3>
+          <h3 class="text-sm font-bold text-slate-900 mb-2">已釘選候選人：政見查證狀態</h3>
           <div class="flex justify-center items-center bg-slate-50 rounded-lg border border-slate-100 p-3">
-            <svg id="compare-radar-svg" viewBox="0 0 360 300" class="w-full max-w-[360px] h-auto" role="img" aria-label="並排候選人六維政策雷達比較圖"></svg>
+            <p>各議題的資料狀態請見下方並排對照。</p>
           </div>
           <div id="compare-radar-legend" class="mt-3 flex flex-wrap gap-2 text-xs"></div>
         </div>
@@ -2150,14 +2150,14 @@
          VIEW 5: 10-QUESTION POLICY & GOVERNANCE PSYCHOLOGICAL TEST
          ========================================== -->
     <section id="view-quiz" class="space-y-4">
-      <div class="audit-notice" role="note"><strong>測試版｜配對標註尚未逐項核對</strong><br>本工具為民間整理。結果供政策探索，投票請自行判斷。政見以官方公報為準。<br>介面更新於 2026-11-19 · <a href="https://info.cec.gov.tw/vote2026/">中選會選舉專區</a> · <a href="#sources">公報來源</a> · <a href="#quiz-method" onclick="showQuizMethod(event)">計分方式</a></div><div class="atlas-hero"><div class="atlas-copy"><p>POLICY COMPASS <i></i> 2026</p><h2>如果由你決定，<br>城市先做什麼？</h2><div>2026 直轄市長及縣市長選舉 · 11 月 28 日投票</div>
+      <div class="audit-notice" role="note"><strong>測試版｜政見原文逐項核對中</strong><br>本工具為民間整理。結果供政策探索，投票請自行判斷。政見以官方公報為準。<br>介面更新於 2026-11-19 · <a href="https://info.cec.gov.tw/vote2026/">中選會選舉專區</a> · <a href="#sources">公報來源</a> · <a href="#quiz-method" onclick="showQuizMethod(event)">計分方式</a></div><div class="atlas-hero"><div class="atlas-copy"><p>POLICY COMPASS <i></i> 2026</p><h2>如果由你決定，<br>城市先做什麼？</h2><div>2026 直轄市長及縣市長選舉 · 11 月 28 日投票</div>
         <div class="quiz-rule">十題單選，選出你會優先推動的方案。可跳題或回頭修改。</div>
         <div>部分支持、沒把握或皆不符合可選不計分選項。十題完成才顯示結果。</div>
         <div>換縣市會重算該縣市的結果，並保留答案。作答時間依閱讀細節的程度而異。</div>
         <div class="quiz-entry-scope">            <label for="quiz-scope-select" class="block text-[11px] text-slate-500 font-semibold mt-3 mb-1">你的投票縣市（依戶籍選擇）</label>
             <select id="quiz-scope-select" onchange="setQuizScope(this.value)" class="w-full py-2 px-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-indigo-500"></select><div id="quiz-scope-roster" aria-live="polite"></div></div>
         <button type="button" class="atlas-enter" id="quiz-enter" onclick="enterQuiz()">開始作答</button></div></div>
-      <details class="quiz-storage" id="quiz-method"><summary>六大議題與計分方式</summary><p>育兒教育、高齡長照、軌道交通、居住都更、科技產業、生態治理。每題政策選項可同時影響多軸，以下列出各題編碼可變動的幅度。</p><p>雷達圖以已作答的計分選項加總，各軸使用同一批題目的最低及最高可達分換算為 0–100。無可變動幅度顯示 0。不計分選項不進入計算。候選人雷達使用摘要是否有條目（有／待確認）。</p><p>方向相近題數按測試標註逐題等權計數。摘要議題涵蓋率以個人雷達分數作權重，計算候選人摘要已涵蓋的比重。兩者均不代表投票建議。</p><div id="quiz-axis-map"></div></details><details class="quiz-storage"><summary>作答規則與資料保存</summary><p>可跳題，十題皆有選擇才顯示候選人配對。「不確定、部分支持或皆不符合」計入完成進度，不參與計分。</p><p>答案、題號及地區會存於此瀏覽器，程式未設定自動到期。共用裝置的下一位使用者可能看到你的紀錄，可從「檢視與操作」清空。作答程式未主動傳送答案。託管平台及第三方服務是否另有連線紀錄，尚未核實。</p></details>
+      <details class="quiz-storage" id="quiz-method"><summary>六大議題與計分方式</summary><p>育兒教育、高齡長照、軌道交通、居住都更、科技產業、生態治理。每題政策選項可同時影響多軸，以下列出各題編碼可變動的幅度。</p><p>雷達圖以已作答的計分選項加總，各軸使用同一批題目的最低及最高可達分換算為 0–100。無可變動幅度顯示 0。不計分選項不進入計算。</p><p></p><div id="quiz-axis-map"></div></details><details class="quiz-storage"><summary>作答規則與資料保存</summary><label for="quiz-retention">保存期限</label> <select id="quiz-retention" onchange="setQuizRetention(this.value)"><option value="0">本次使用</option><option value="7">7 天</option><option value="30" selected>30 天</option></select> <button type="button" onclick="resetQuizAnswers()">清空測驗紀錄</button><p>可跳題，十題皆有選擇才顯示個人議題偏好。「不確定、部分支持或皆不符合」計入完成進度，不參與計分。</p><p>答案、題號及地區會存於此瀏覽器，可設定保存期限。共用裝置的下一位使用者可能看到你的紀錄，可從「檢視與操作」清空。作答程式未主動傳送答案。託管平台及第三方服務是否另有連線紀錄，尚未核實。</p></details>
 
       <div class="flex flex-wrap items-center justify-between gap-2 px-1">
         <div class="flex items-center gap-2 min-w-0">
@@ -2202,7 +2202,7 @@
   </main>
 
   <footer class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-5 pt-1 text-[11px] text-slate-500 leading-relaxed">
-    <div class="border-t border-slate-200 pt-3">候選人雷達呈現各議題有無摘要。測驗涵蓋率依作答權重計算，請搭配公報確認各議題的實際立場。二維光譜仍採人工編碼。選舉原始資料請參閱 <a class="text-indigo-700 underline" href="https://info.cec.gov.tw/vote2026/" target="_blank" rel="noopener noreferrer">中選會官方專區</a>。</div>
+    <div class="border-t border-slate-200 pt-3">各項政見的核對狀態可在矩陣與候選人資訊頁查看。二維光譜仍採人工編碼。選舉原始資料請參閱 <a class="text-indigo-700 underline" href="https://info.cec.gov.tw/vote2026/" target="_blank" rel="noopener noreferrer">中選會官方專區</a>。</div>
   </footer>
 
   <!-- Candidate Detail Modal -->
@@ -4969,7 +4969,7 @@
 
         if (q) {
           const hay = [
-            c.city, c.name, c.party, c.slogan,
+            c.city, c.name, c.num, c.party, c.slogan,
             c.highlights.join(' '),
             Object.values(c.issues).join(' ')
           ].join(' ').toLowerCase();
@@ -5375,12 +5375,12 @@
                   <a href="${c.pdfUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="text-[11px] text-blue-700 underline font-mono-code">公報PDF↗</a>
                 </div>
               </td>
-              <td class="py-3 px-3 align-top text-xs text-slate-700 leading-relaxed">${c.issues.childcare}</td>
-              <td class="py-3 px-3 align-top text-xs text-slate-700 leading-relaxed">${c.issues.senior}</td>
-              <td class="py-3 px-3 align-top text-xs text-slate-700 leading-relaxed">${c.issues.transit}</td>
-              <td class="py-3 px-3 align-top text-xs text-slate-700 leading-relaxed">${c.issues.housing}</td>
-              <td class="py-3 px-3 align-top text-xs text-slate-700 leading-relaxed">${c.issues.industry}</td>
-              <td class="py-3 px-3 align-top text-xs text-slate-700 leading-relaxed">${c.issues.governance}</td>
+              <td class="py-3 px-3 align-top text-xs text-slate-700 leading-relaxed">${renderPolicyEvidence(c, 'childcare')}</td>
+              <td class="py-3 px-3 align-top text-xs text-slate-700 leading-relaxed">${renderPolicyEvidence(c, 'senior')}</td>
+              <td class="py-3 px-3 align-top text-xs text-slate-700 leading-relaxed">${renderPolicyEvidence(c, 'transit')}</td>
+              <td class="py-3 px-3 align-top text-xs text-slate-700 leading-relaxed">${renderPolicyEvidence(c, 'housing')}</td>
+              <td class="py-3 px-3 align-top text-xs text-slate-700 leading-relaxed">${renderPolicyEvidence(c, 'industry')}</td>
+              <td class="py-3 px-3 align-top text-xs text-slate-700 leading-relaxed">${renderPolicyEvidence(c, 'governance')}</td>
             </tr>
           `;
         }).join('');
@@ -5395,15 +5395,15 @@
           <tr>
             <th class="py-3 px-4 w-48">縣市 / 號次 / 候選人</th>
             <th class="py-3 px-3 w-40">登記政黨 / 公報型態</th>
-            <th class="py-3 px-4">【${meta.label}】公報原文與公開政見具體主張</th>
+            <th class="py-3 px-4">【${meta.label}】政見摘要與核對狀態</th>
             <th class="py-3 px-3 w-56">核心量化指標與政見亮點</th>
-            <th class="py-3 px-3 w-36">議題比重 / 操作</th>
+            <th class="py-3 px-3 w-36">操作</th>
           </tr>
         `;
 
         tbody.innerHTML = filtered.map(c => {
           const isPinned = state.pinnedIds.includes(c.id);
-          const weight = c.radar[radarIdx] ?? 0;
+
           return `
             <tr class="hover:bg-blue-50/40 transition cursor-pointer" onclick="openCandidateModal('${c.id}')">
               <td class="py-3.5 px-4 align-top">
@@ -5420,7 +5420,7 @@
                 <a href="${c.pdfUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="inline-block mt-1 text-xs text-blue-700 underline font-semibold">${c.city}官方公報PDF ↗</a>
               </td>
               <td class="py-3.5 px-4 align-top text-sm text-slate-800 leading-relaxed font-medium">
-                ${c.issues[issueKey]}
+                ${renderPolicyEvidence(c, issueKey)}
               </td>
               <td class="py-3.5 px-3 align-top">
                 <div class="flex flex-wrap gap-1">
@@ -5428,10 +5428,6 @@
                 </div>
               </td>
               <td class="py-3.5 px-3 align-top">
-                <div class="text-xs font-mono-code text-slate-600 mb-1">配置強度：<strong class="text-slate-900">${weight}%</strong></div>
-                <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden mb-2.5">
-                  <div class="h-full bg-blue-600 rounded-full" style="width:${weight}%"></div>
-                </div>
                 <button type="button" onclick="togglePinCandidate('${c.id}', event)" class="w-full px-2.5 py-1 rounded text-xs font-semibold border transition ${isPinned ? 'bg-blue-700 text-white border-blue-700' : 'bg-white text-slate-700 border-slate-300 hover:border-blue-500'}">
                   ${isPinned ? '✓ 已在並排對照' : '+ 加入並排對照'}
                 </button>
@@ -5588,7 +5584,7 @@
             ${showLabel && isFilteredIn ? `
               <text x="${pt.x.toFixed(1)}" y="${(pt.y - r - 4).toFixed(1)}" text-anchor="middle" font-size="${isSelected ? '11.5' : '10'}" font-weight="${isSelected || isSameCity ? '700' : '500'}" fill="${isSelected ? '#0F172A' : '#334155'}" stroke="#FFFFFF" stroke-width="2.5" paint-order="stroke">${labelText}</text>
             ` : ''}
-            <title>${c.city} ${getDisplayNum(c)} ${getDisplayName(c)} (${getDisplayParty(c)}) — 點擊檢視六維政策雷達</title>
+            <title>${c.city} ${getDisplayNum(c)} ${getDisplayName(c)} (${getDisplayParty(c)}) — 點擊檢視政見來源</title>
           </g>
         `;
       }).join('');
@@ -5722,12 +5718,10 @@
         <!-- 6-Axis Radar SVG -->
         <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
           <div class="flex items-center justify-between text-xs mb-1">
-            <span class="font-bold text-slate-800">六維政策重心雷達圖</span>
-            <span class="text-[11px] text-slate-500 font-mono-code">虛線 = 全台81人平均基準</span>
+            <span class="font-bold text-slate-800">政見資料狀態</span>
+            <span class="text-[11px] text-slate-500 font-mono-code"></span>
           </div>
-          <svg viewBox="0 0 360 295" class="w-full max-w-[340px] mx-auto h-auto">
-            ${buildHexagonRadarSVG([c], true)}
-          </svg>
+          <p>各議題的資料狀態請見政見明細。</p>
           <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-200/80 text-xs font-mono-code">
             <div class="bg-white p-2 rounded border border-slate-200">
               <span class="text-slate-500 block text-[11px]">X軸（社福↔建設）：</span>
@@ -5746,12 +5740,12 @@
             ${c.highlights.map(h => `<span class="px-2 py-0.5 rounded bg-blue-50 text-blue-900 border border-blue-200 text-[11px] font-semibold">${h}</span>`).join('')}
           </div>
           <div class="space-y-1.5 text-xs border-t border-slate-100 pt-2">
-            <div><strong class="text-slate-900">1. 育兒教育：</strong><span class="text-slate-700">${c.issues.childcare}</span></div>
-            <div><strong class="text-slate-900">2. 高齡長照：</strong><span class="text-slate-700">${c.issues.senior}</span></div>
-            <div><strong class="text-slate-900">3. 軌道交通：</strong><span class="text-slate-700">${c.issues.transit}</span></div>
-            <div><strong class="text-slate-900">4. 居住都更：</strong><span class="text-slate-700">${c.issues.housing}</span></div>
-            <div><strong class="text-slate-900">5. 科技產業：</strong><span class="text-slate-700">${c.issues.industry}</span></div>
-            <div><strong class="text-slate-900">6. 生態治理：</strong><span class="text-slate-700">${c.issues.governance}</span></div>
+            <div><strong class="text-slate-900">1. 育兒教育：</strong>${renderPolicyEvidence(c, 'childcare')}</div>
+            <div><strong class="text-slate-900">2. 高齡長照：</strong>${renderPolicyEvidence(c, 'senior')}</div>
+            <div><strong class="text-slate-900">3. 軌道交通：</strong>${renderPolicyEvidence(c, 'transit')}</div>
+            <div><strong class="text-slate-900">4. 居住都更：</strong>${renderPolicyEvidence(c, 'housing')}</div>
+            <div><strong class="text-slate-900">5. 科技產業：</strong>${renderPolicyEvidence(c, 'industry')}</div>
+            <div><strong class="text-slate-900">6. 生態治理：</strong>${renderPolicyEvidence(c, 'governance')}</div>
           </div>
         </div>
 
@@ -5827,12 +5821,12 @@
         const rows = [
           { label: '競選主軸與口號', render: c => `<span class="font-bold text-teal-800">${c.slogan}</span>` },
           { label: '核心量化亮點標籤', render: c => `<div class="flex flex-wrap gap-1">${c.highlights.map(h => `<span class="px-2 py-0.5 rounded bg-blue-50 text-blue-900 border border-blue-200 text-xs font-medium">${h}</span>`).join('')}</div>` },
-          { label: '1. 育兒與教育', render: c => c.issues.childcare },
-          { label: '2. 高齡與醫療長照', render: c => c.issues.senior },
-          { label: '3. 軌道交通與通勤', render: c => c.issues.transit },
-          { label: '4. 居住正義與都更', render: c => c.issues.housing },
-          { label: '5. 科技招商與產業', render: c => c.issues.industry },
-          { label: '6. 生態能源與治理', render: c => c.issues.governance },
+          { label: '1. 育兒與教育', render: c => renderPolicyEvidence(c, 'childcare') },
+          { label: '2. 高齡與醫療長照', render: c => renderPolicyEvidence(c, 'senior') },
+          { label: '3. 軌道交通與通勤', render: c => renderPolicyEvidence(c, 'transit') },
+          { label: '4. 居住正義與都更', render: c => renderPolicyEvidence(c, 'housing') },
+          { label: '5. 科技招商與產業', render: c => renderPolicyEvidence(c, 'industry') },
+          { label: '6. 生態能源與治理', render: c => renderPolicyEvidence(c, 'governance') },
           { label: '政策光譜座標與公報來源', render: c => `<div class="font-mono-code text-xs text-slate-600">X軸(社福↔建設): <strong>${c.x}</strong> | Y軸(給付↔制度): <strong>${c.y}</strong><br>${c.bulletinType}<br><a href="${c.pdfUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline font-bold">${c.city}中選會選舉公報PDF ↗</a></div>` }
         ];
 
@@ -5887,6 +5881,27 @@
       }).join('');
     }
 
+    // Keyed by candidate ID and issue. Each original needs a URL, quote and source date.
+    const POLICY_SOURCES = {};
+    function policyRecord(candidate, issue) {
+      const summary = candidate.issues[issue] || '';
+      const sources = POLICY_SOURCES[candidate.id]?.[issue] || [];
+      const verified = sources.some(source => source.verified && source.url && source.quote);
+      const hasSummary = summary && !/未於公報單獨列項|未於公開摘要單獨列項|未單獨列出|本次摘要尚未確認/.test(summary);
+      const status = verified ? '有原始來源' : hasSummary ? '待核對' : '未查得';
+      return {status, summary, sources};
+    }
+
+    function renderPolicyEvidence(candidate, issue) {
+      const record = policyRecord(candidate, issue);
+      return `<strong>${record.status}</strong><p>${record.summary || '目前無摘要。'}</p>
+        <details onclick="event.stopPropagation()"><summary>來源與核對資料</summary>
+          <p><a href="${candidate.pdfUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">官方公報 PDF</a></p>
+          ${record.sources.length ? record.sources.map(source => `<p>${source.kind} · ${source.verified ? '已核對' : '待核對'} · ${source.date || '日期未確認'} · <a href="${source.url}" target="_blank" rel="noopener noreferrer">來源</a></p><blockquote>${source.quote || '原文待擷取'}</blockquote>`).join('') : '<p>逐條原文、頁碼與來源日期尚待補錄。</p>'}
+          <p><a href="https://gazette2026.taiwangogo.tw/scan/" target="_blank" rel="noopener noreferrer">民間公報姓名查詢</a></p>
+        </details>`;
+    }
+
     function openCandidateModal(id) {
       const c = CANDIDATES.find(x => x.id === id);
       if (!c) return;
@@ -5910,14 +5925,13 @@
           <button type="button" onclick="closeCandidateModal()" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold">✕ 關閉</button>
         </div>
 
+        <p class="my-3"><a href="https://gazette2026.taiwangogo.tw/scan/" target="_blank" rel="noopener noreferrer">開啟民間公報</a>，以姓名搜尋，再核對縣市與號次。</p>
         ${c.ocrExcerpts.length ? `<section class="ocr-evidence"><h4>公報圖片辨識重點</h4><p>以下內容經 OCR 擷取並對照公報原圖，為重點整理。</p><ul>${c.ocrExcerpts.map(text => `<li>${text}</li>`).join('')}</ul><a href="${c.pdfUrl}" target="_blank" rel="noopener noreferrer">查看選舉公報原圖</a></section>` : ''}
 
         <div class="grid grid-cols-1 md:grid-cols-12 gap-4 my-4 items-center">
           <div class="md:col-span-5 bg-slate-50 border border-slate-200 rounded-xl p-3">
-            <div class="text-xs font-bold text-slate-800 text-center mb-1">六維政策雷達 vs. 全台均值（虛線）</div>
-            <svg viewBox="0 0 360 295" class="w-full max-w-[300px] mx-auto h-auto">
-              ${buildHexagonRadarSVG([c], true)}
-            </svg>
+            <div class="text-xs font-bold text-slate-800 text-center mb-1">政見資料狀態</div>
+            <p>各議題的資料狀態請見政見明細。</p>
           </div>
           <div class="md:col-span-7 space-y-2.5">
             <div class="text-xs font-bold text-slate-500">核心量化指標與政見亮點：</div>
@@ -5949,12 +5963,12 @@
         </div>
 
         <div class="space-y-2.5 border-t border-slate-200 pt-4 text-xs sm:text-sm">
-          <div class="p-3 rounded-lg bg-slate-50 border border-slate-200"><strong class="text-slate-900 block mb-0.5">1. 育兒與教育：</strong><span class="text-slate-700">${c.issues.childcare}</span></div>
-          <div class="p-3 rounded-lg bg-slate-50 border border-slate-200"><strong class="text-slate-900 block mb-0.5">2. 高齡與醫療長照：</strong><span class="text-slate-700">${c.issues.senior}</span></div>
-          <div class="p-3 rounded-lg bg-slate-50 border border-slate-200"><strong class="text-slate-900 block mb-0.5">3. 軌道交通與通勤：</strong><span class="text-slate-700">${c.issues.transit}</span></div>
-          <div class="p-3 rounded-lg bg-slate-50 border border-slate-200"><strong class="text-slate-900 block mb-0.5">4. 居住正義與都更：</strong><span class="text-slate-700">${c.issues.housing}</span></div>
-          <div class="p-3 rounded-lg bg-slate-50 border border-slate-200"><strong class="text-slate-900 block mb-0.5">5. 科技招商與產業：</strong><span class="text-slate-700">${c.issues.industry}</span></div>
-          <div class="p-3 rounded-lg bg-slate-50 border border-slate-200"><strong class="text-slate-900 block mb-0.5">6. 生態能源與治理：</strong><span class="text-slate-700">${c.issues.governance}</span></div>
+          <div class="p-3 rounded-lg bg-slate-50 border border-slate-200"><strong class="text-slate-900 block mb-0.5">1. 育兒與教育：</strong>${renderPolicyEvidence(c, 'childcare')}</div>
+          <div class="p-3 rounded-lg bg-slate-50 border border-slate-200"><strong class="text-slate-900 block mb-0.5">2. 高齡與醫療長照：</strong>${renderPolicyEvidence(c, 'senior')}</div>
+          <div class="p-3 rounded-lg bg-slate-50 border border-slate-200"><strong class="text-slate-900 block mb-0.5">3. 軌道交通與通勤：</strong>${renderPolicyEvidence(c, 'transit')}</div>
+          <div class="p-3 rounded-lg bg-slate-50 border border-slate-200"><strong class="text-slate-900 block mb-0.5">4. 居住正義與都更：</strong>${renderPolicyEvidence(c, 'housing')}</div>
+          <div class="p-3 rounded-lg bg-slate-50 border border-slate-200"><strong class="text-slate-900 block mb-0.5">5. 科技招商與產業：</strong>${renderPolicyEvidence(c, 'industry')}</div>
+          <div class="p-3 rounded-lg bg-slate-50 border border-slate-200"><strong class="text-slate-900 block mb-0.5">6. 生態能源與治理：</strong>${renderPolicyEvidence(c, 'governance')}</div>
         </div>
       `;
 
@@ -6010,12 +6024,12 @@
         lines.push(`\n■ ${c.city} ${getDisplayNum(c)} ${getDisplayName(c)}（${getDisplayParty(c)}）`);
         lines.push(`  主軸：${c.slogan}`);
         lines.push(`  亮點：${c.highlights.join('、')}`);
-        lines.push(`  育兒教育：${c.issues.childcare}`);
-        lines.push(`  高齡長照：${c.issues.senior}`);
-        lines.push(`  軌道交通：${c.issues.transit}`);
-        lines.push(`  居住都更：${c.issues.housing}`);
-        lines.push(`  科技產業：${c.issues.industry}`);
-        lines.push(`  生態治理：${c.issues.governance}`);
+        lines.push(`  育兒教育：${policyRecord(c, 'childcare').status} · ${c.issues.childcare}`);
+        lines.push(`  高齡長照：${policyRecord(c, 'senior').status} · ${c.issues.senior}`);
+        lines.push(`  軌道交通：${policyRecord(c, 'transit').status} · ${c.issues.transit}`);
+        lines.push(`  居住都更：${policyRecord(c, 'housing').status} · ${c.issues.housing}`);
+        lines.push(`  科技產業：${policyRecord(c, 'industry').status} · ${c.issues.industry}`);
+        lines.push(`  生態治理：${policyRecord(c, 'governance').status} · ${c.issues.governance}`);
         lines.push(`  官方公報：${c.pdfUrl}`);
       });
       copyTextToClipboard(lines.join('\n'), '已將並排對照摘要複製至剪貼簿');
@@ -6437,9 +6451,16 @@
     }
 
     const QUIZ_STORAGE_KEY = 'policy_compass_quiz_v2';
+    let quizRetention = 30;
+    function setQuizRetention(value) {
+      quizRetention = [0,7,30].includes(Number(value)) ? Number(value) : 30;
+      persistQuizState();
+    }
     function persistQuizState() {
       try {
+        if (!quizRetention) { localStorage.removeItem(QUIZ_STORAGE_KEY); return; }
         localStorage.setItem(QUIZ_STORAGE_KEY, JSON.stringify({
+          expiresAt: Date.now() + quizRetention * 86400000, retention: quizRetention,
           answers: state.quizAnswers, step: state.quizStep, scope: state.quizScope
         }));
       } catch (e) { /* Private browsing or restrictive storage */ }
@@ -6448,6 +6469,12 @@
       try {
         const data = JSON.parse(localStorage.getItem(QUIZ_STORAGE_KEY) || 'null');
         if (!data || typeof data !== 'object') return;
+        if (data.expiresAt && data.expiresAt <= Date.now()) { localStorage.removeItem(QUIZ_STORAGE_KEY); return; }
+        quizRetention = [7,30].includes(data.retention) ? data.retention : 30;
+        document.getElementById('quiz-retention').value = String(quizRetention);
+        if (!data.expiresAt) {
+          localStorage.setItem(QUIZ_STORAGE_KEY, JSON.stringify({...data, retention:30, expiresAt:Date.now()+30*86400000}));
+        }
         if (data.answers && typeof data.answers === 'object') {
           QUIZ_QUESTIONS.forEach((q, i) => {
             const code = data.answers[i];
@@ -6533,7 +6560,7 @@
       persistQuizState();
       updateQuizBadgeUI();
       renderQuizView();
-      showToast('已完成 10 題隨機體驗作答，並計算出最接近您的候選人名單');
+      showToast('已完成 10 題隨機體驗作答，並整理你的議題偏好');
     }
 
     function resetQuizAnswers() {
@@ -6601,34 +6628,14 @@
       // Determine archetype
       const position = describeQuizPosition(userX, userY, scoredKeys.length);
 
-      // Filter candidate pool by state.quizScope
-      let pool = [];
-      if (state.quizScope === 'six') {
-        pool = CANDIDATES.filter(c => REGION_PRESETS.six.includes(c.city));
-      } else if (REGION_PRESETS[state.quizScope]) {
-        pool = CANDIDATES.filter(c => REGION_PRESETS[state.quizScope].includes(c.city));
-      } else if (CITY_ORDER.includes(state.quizScope)) {
-        pool = CANDIDATES.filter(c => c.city === state.quizScope);
-      }
-
-      const totalWeight = userRadar.reduce((sum, weight) => sum + weight, 0);
       const choices = scoredKeys.map(key => QUIZ_QUESTIONS[key].options.find(o => o.code === state.quizAnswers[key]));
-      const scored = pool.map(candidate => {
-        const covered = candidate.radar.reduce((sum, axis, i) => sum + (axis ? userRadar[i] : 0), 0);
-        return {candidate, score: totalWeight ? Math.round(100 * covered / totalWeight) : null, matchedQs: choices.filter(o => o.matches.includes(candidate.id)).map(o => o.tag)};
-      });
-      scored.sort((a, b) => (b.score ?? 0) - (a.score ?? 0)
-        || CITY_ORDER.indexOf(a.candidate.city) - CITY_ORDER.indexOf(b.candidate.city)
-        || a.candidate.id.localeCompare(b.candidate.id, undefined, {numeric: true}));
-
       state.userSpectrumProfile = {
         radar: userRadar,
         x: userX,
         y: userY,
         answeredCount: n,
         position,
-        choices,
-        topMatches: scored
+        choices
       };
     }
 
@@ -6659,7 +6666,7 @@
     function renderQuizView() {
       const enter = document.getElementById('quiz-enter');
       const answered = state.userSpectrumProfile?.answeredCount || 0;
-      if (enter) enter.textContent = answered === QUIZ_QUESTIONS.length ? '查看我的配對' : answered ? '繼續作答' : '開始作答';
+      if (enter) enter.textContent = answered === QUIZ_QUESTIONS.length ? '查看我的議題偏好' : answered ? '繼續作答' : '開始作答';
       updateQuizBadgeUI();
 
       // 1. Populate Quiz Scope Dropdown
@@ -6766,8 +6773,8 @@
           <aside class="rounded-2xl bg-white border border-slate-200 p-4 sm:p-5 shadow-sm">
             <p class="text-xs uppercase tracking-widest font-bold text-indigo-700">政策分析</p>
             <h3 class="font-extrabold text-lg text-slate-900 mt-1">你的治理偏好</h3>
-            <p class="text-sm text-slate-600 mt-2 leading-relaxed">完成全部十題，才會呈現候選人模型配對。過程中不顯示政黨與候選人的引導性推薦。</p>
-            <div class="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs text-slate-600 leading-relaxed">這是探索政策立場的互動工具，並非經心理計量驗證的心理測驗，也不代表投票建議或選舉預測。配對所用政策向量為本平台編碼，需要回到原始公報核對。</div>
+            <p class="text-sm text-slate-600 mt-2 leading-relaxed">完成十題後可查看個人議題偏好。</p>
+            <div class="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs text-slate-600 leading-relaxed">這是探索政策立場的互動工具，並非經心理計量驗證的心理測驗，也不代表投票建議或選舉預測。題目分數由本站編碼。</div>
           </aside>`;
         return;
       }
@@ -6784,28 +6791,20 @@
               <p class="mt-1 text-xs leading-relaxed text-slate-600">此分類會隨後續答案改變，尚不產生候選人排行。</p>
             </div>
             <button type="button" onclick="jumpToQuizStep(${Math.max(0,QUIZ_QUESTIONS.findIndex((_, i) => !state.quizAnswers[i]))})" class="mt-4 w-full rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-sm py-3">繼續作答</button>
-            <p class="mt-3 text-xs text-slate-500 leading-relaxed">全部作答完成後才提供模型比對；配對分數不是民調、投票機率或科學心理診斷。</p>
+            <p class="mt-3 text-xs text-slate-500 leading-relaxed">完成全部題目後會呈現個人議題偏好。</p>
           </aside>`;
         return;
       }
 
       const prof = state.userSpectrumProfile;
-      const topMatches = prof.topMatches.slice(0, 6);
-      const maxAligned = Math.max(0, ...prof.topMatches.map(m => m.matchedQs.length));
-      const leaders = prof.topMatches.filter(m => maxAligned > 0 && m.matchedQs.length === maxAligned);
       const userPseudoCand = { radar: prof.radar, party: 'other' };
 
       rContainer.innerHTML = `
-        <div class="audit-notice" role="note"><strong>測試版｜配對標註尚未逐項核對</strong><br>本工具為民間整理。結果供政策探索，投票請自行判斷。政見以官方公報為準。<br>介面更新於 2026-11-19 · <a href="https://info.cec.gov.tw/vote2026/">中選會選舉專區</a> · <a href="#sources">公報來源</a> · <a href="#quiz-method" onclick="showQuizMethod(event)">計分方式</a></div>
+        <div class="audit-notice" role="note"><strong>測試版｜政見原文逐項核對中</strong><br>本工具為民間整理。結果供政策探索，投票請自行判斷。政見以官方公報為準。<br>介面更新於 2026-11-19 · <a href="https://info.cec.gov.tw/vote2026/">中選會選舉專區</a> · <a href="#sources">公報來源</a> · <a href="#quiz-method" onclick="showQuizMethod(event)">計分方式</a></div>
         <section class="match-result rounded-2xl bg-indigo-50 border border-indigo-200 p-5 space-y-3 mb-4">
           <p class="text-sm text-indigo-800 font-bold">${document.getElementById('quiz-scope-select').selectedOptions[0].textContent}</p>
-          <h3 id="quiz-match-title" tabindex="-1" class="text-xl font-extrabold">政策方向配對（測試結果）</h3>
-          <p class="text-sm">按平台已標註的政策方案，計算你與候選人有幾題方向相近。各題等權，未標註的方案不計分。</p>
-          ${leaders.length ? leaders.map(({candidate:c, matchedQs}) => `<article class="rounded-xl bg-white border border-indigo-100 p-3">
-            <button type="button" class="text-lg font-bold text-indigo-800 underline" onclick="openCandidateModal('${c.id}')">${getDisplayName(c)}</button>
-            <span class="text-sm">${c.city} · ${leaders.length > 1 ? '並列最高' : '最多相近方案'} · ${matchedQs.length} 題</span>
-            <p class="text-sm mt-2">相近方案（平台標註）：</p>
-            <ul class="list-disc pl-5 text-sm">${matchedQs.map(tag => `<li>${tag} · 候選人原文與頁碼待核對 ${state.blindMode ? '' : `<a href="${c.pdfUrl}" target="_blank" rel="noopener noreferrer" class="underline">官方公報</a>`}</li>`).join('')}</ul><p class="text-sm">標註依選項做法比對，尚待逐項確認</p></article>`).join('') : state.quizScope ? '<p>目前縣市沒有相符的方案標註。仍可查閱候選人公報。</p>' : '<p>請先在測驗入口選擇投票縣市。</p>'}
+          <h3 id="quiz-match-title" tabindex="-1" class="text-xl font-extrabold">你的政策議題偏好</h3>
+          <p>依個人作答呈現議題偏好。可前往矩陣查看各候選人的政見及來源。</p>
           <button type="button" class="rounded-lg bg-indigo-700 px-4 py-2 text-white font-bold" onclick="shareQuizPriorities()">分享我的議題偏好</button>
           <button type="button" class="rounded-lg border px-4 py-2" onclick="copyTextToClipboard(location.origin + location.pathname + '#quiz', '已複製測驗入口')">複製測驗連結</button>
           <button type="button" class="rounded-lg border px-4 py-2" onclick="resetQuizAnswers()">清除答案並重測</button>
@@ -6843,9 +6842,7 @@
           </ul>
           <!-- Action Buttons Linking to Spectrum & Compare Workbench -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <button type="button" onclick="loadTopQuizMatchesToCompare()" class="px-3 py-2 rounded-lg bg-blue-700 text-white text-xs font-bold hover:bg-blue-800 transition">
-              將議題涵蓋率前 4 位加入對照
-            </button>
+            <button type="button" onclick="switchMainTab('matrix')" class="rounded border p-2">瀏覽政見議題矩陣</button>
             <button type="button" onclick="viewUserOnSpectrum()" class="px-3 py-2 rounded-lg bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition">
               在二維光譜座標查看我的位置 ★
             </button>
@@ -6855,72 +6852,7 @@
           </button>
         </div>
 
-        <!-- Top Matched Candidates List -->
-        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-3">
-          <div class="flex items-center justify-between">
-            <h3 class="text-sm font-extrabold text-slate-900">候選人政見議題涵蓋排序（共比對 ${prof.topMatches.length} 人）</h3>
-            <span class="text-[11px] font-mono-code text-slate-500">點擊姓名檢視公報</span>
-          </div>
-
-          <p class="text-xs text-slate-600 leading-relaxed bg-slate-50 border border-slate-100 rounded-lg p-3">依答案換算六項議題權重，再加總候選人摘要已記載議題的權重，除以全部權重。摘要議題涵蓋率依摘要提及的議題與作答權重計算，不代表立場相似度或支持率。對照清單依摘要議題涵蓋率排序。候選人雷達外圈表示有摘要，中心表示尚未確認。</p>
-          <div class="space-y-2.5">
-            ${topMatches.map((m, rankIdx) => {
-              const c = m.candidate;
-              const isPinned = state.pinnedIds.includes(c.id);
-              return `
-                <div class="p-3.5 rounded-xl border ${rankIdx === 0 ? 'border-amber-400 bg-amber-50/40' : 'border-slate-200 bg-slate-50/70'} hover:border-blue-400 transition">
-                  <div class="flex items-start justify-between gap-2">
-                    <div>
-                      <div class="flex flex-wrap items-center gap-1.5">
-                        <span class="px-2 py-0.5 rounded text-[11px] font-mono-code font-extrabold ${rankIdx === 0 ? 'bg-amber-600 text-white' : 'bg-slate-800 text-white'}">
-                          ${m.score === null ? '無可計算權重' : `摘要議題涵蓋率 ${m.score}%`}
-                        </span>
-                        <span class="px-2 py-0.5 rounded bg-white border border-slate-300 text-xs font-bold text-slate-900">${c.city} ${getDisplayNum(c)}</span>
-                        <span class="px-2 py-0.5 rounded border text-[11px] font-semibold ${getPartyBadgeClasses(c.party)}">${getDisplayParty(c)}</span> ${getGenderBadge(c)}
-                      </div>
-                      <button type="button" onclick="openCandidateModal('${c.id}')" class="text-base font-extrabold text-slate-900 hover:text-blue-700 mt-1.5 block text-left">
-                        ${getDisplayName(c)} <span class="text-xs font-normal text-slate-500">（${c.slogan}）</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  ${m.matchedQs.length > 0 ? `
-                    <div class="mt-2 text-[11px] text-amber-900 bg-amber-100/70 border border-amber-200/80 rounded px-2 py-1">
-                      <strong>本平台標註的政策相似選項：</strong>${m.matchedQs.join('、')}
-                    </div>
-                  ` : ''}
-
-                  <div class="flex flex-wrap gap-1 mt-2">
-                    ${c.highlights.slice(0, 3).map(h => `<span class="px-1.5 py-0.5 rounded bg-white border border-slate-200 text-[11px] text-slate-700">${h}</span>`).join('')}
-                  </div>
-
-                  <div class="mt-2.5 pt-2 border-t border-slate-200/70 flex flex-wrap items-center justify-between gap-2 text-[11px]">
-                    <span class="font-mono-code text-slate-500">摘要涵蓋 ${c.breadth} / 6 項</span>
-                    <div class="flex items-center gap-2">
-                      <button type="button" onclick="togglePinCandidate('${c.id}')" class="px-2 py-0.5 rounded border font-semibold ${isPinned ? 'bg-blue-700 text-white border-blue-700' : 'bg-white text-slate-700 border-slate-300 hover:border-blue-500'}">
-                        ${isPinned ? '✓ 已在對照匣' : '+ 加入對照'}
-                      </button>
-                      <button type="button" onclick="openCandidateModal('${c.id}')" class="text-blue-700 font-bold underline">公報詳情</button>
-                    </div>
-                  </div>
-                </div>
-              `;
-            }).join('')}
-          </div>
-        </div>
       `;
-    }
-
-    function loadTopQuizMatchesToCompare() {
-      if (!state.userSpectrumProfile || state.userSpectrumProfile.answeredCount < QUIZ_QUESTIONS.length || !state.userSpectrumProfile.topMatches.length) {
-        showToast('請先完成全部 10 題');
-        return;
-      }
-      const topIds = state.userSpectrumProfile.topMatches.slice(0, 4).map(m => m.candidate.id);
-      state.pinnedIds = topIds;
-      saveStateToStorage();
-      switchMainTab('compare');
-      showToast('已將與您最契合的前 4 位候選人載入「並排對照工作台」');
     }
 
     function viewUserOnSpectrum() {
@@ -6939,7 +6871,7 @@
       state.onlyHasIssue = false;
       state.partyFilter = 'all';
       state.searchQuery = '';
-      state.selectedCandidateId = state.userSpectrumProfile.topMatches[0]?.candidate.id;
+
       state.spectrumMode = 'orientation';
       switchMainTab('spectrum');
       showToast('已在二維政策光譜座標圖上標記「★ 您的測驗座標」，候選人顯示範圍已套用測驗地區');
@@ -6971,16 +6903,7 @@
         `■ 目前答案的位置：${p.position}`,
         `■ 您的政策光譜座標：X軸(社福↔建設)=${p.x}，Y軸(給付↔制度)=${p.y}`,
         `■ 您的六維政策編碼：育兒教育 ${p.radar[0]}% / 高齡長照 ${p.radar[1]}% / 軌道交通 ${p.radar[2]}% / 居住都更 ${p.radar[3]}% / 科技產業 ${p.radar[4]}% / 生態治理 ${p.radar[5]}%`,
-        '',
-        '【政見議題涵蓋結果】'
       ];
-      p.topMatches.slice(0, 5).forEach((m, i) => {
-        const c = m.candidate;
-        lines.push(`${i + 1}. ${c.city} ${getDisplayNum(c)} ${getDisplayName(c)}（${getDisplayParty(c)}）— ${m.score === null ? '無可計算權重' : `摘要議題涵蓋率 ${m.score}%`}`);
-        lines.push(`   主軸：${c.slogan}`);
-        if (m.matchedQs.length) lines.push(`   平台標註的相似選項：${m.matchedQs.join('、')}`);
-        lines.push(`   官方公報PDF：${c.pdfUrl}`);
-      });
       lines.push('', '註：本結果是主觀編碼的探索工具，不代表心理診斷、投票建議、民調或勝選／投票機率。請逐一查核官方選舉公報。');
       copyTextToClipboard(lines.join('\n'), '已複製政策偏好測驗報告');
     }
