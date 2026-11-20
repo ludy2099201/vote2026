@@ -6846,7 +6846,7 @@
       rContainer.innerHTML = `
         <div class="audit-notice" role="note"><strong>測試版｜政見原文逐項核對中</strong><br>本工具為民間整理。結果供政策探索，投票請自行判斷。政見以官方公報為準。<br>介面更新於 2026-11-19 · <a href="https://info.cec.gov.tw/vote2026/">中選會選舉專區</a> · <a href="#sources">公報來源</a> · <a href="#quiz-method" onclick="showQuizMethod(event)">計分方式</a></div>
         <section class="match-result rounded-2xl bg-indigo-50 border border-indigo-200 p-5 space-y-3 mb-4">
-          <p class="text-sm text-indigo-800 font-bold">${document.getElementById('quiz-scope-select').selectedOptions[0].textContent}</p>
+          <p class="text-sm text-indigo-800 font-bold">全臺候選人</p>
           <h3 id="quiz-match-title" tabindex="-1" class="text-xl font-extrabold">你的政策議題偏好</h3>
           <p class="rounded-xl bg-indigo-50 p-3">${nearestPolicy(prof)}</p><p>依個人作答呈現議題偏好。可前往矩陣查看各候選人的政見及來源。</p>
           <button type="button" class="rounded-lg bg-indigo-700 px-4 py-2 text-white font-bold" onclick="shareQuizPriorities()">分享我的議題偏好</button>
