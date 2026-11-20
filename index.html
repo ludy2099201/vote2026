@@ -2105,7 +2105,7 @@
          ========================================== -->
     <section id="view-sources" class="hidden space-y-6">
       <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-        <h2 class="text-lg font-bold text-slate-900">中央選舉委員會 115年全台22縣市官方選舉公報 PDF 索引</h2><p class="audit-notice">已依公報基本資料欄補充候選人性別。部分圖片政見經 OCR 辨識並對照原圖，已核對的摘錄可在候選人詳情查看。其餘政見摘要、號次、政黨及模型分數仍待逐筆核對。</p>
+        <h2 class="text-lg font-bold text-slate-900">中央選舉委員會 115年全台22縣市官方選舉公報 PDF 索引</h2><p class="audit-notice">已依公報基本資料欄補充候選人性別。部分圖片政見經 OCR 辨識並對照原圖，已核對的摘錄可在候選人詳情查看。各議題會分別標示摘要的查證進度與原文收錄狀態。</p>
         <p class="text-xs sm:text-sm text-slate-600 mt-1">
           下列清單是官方公報的便捷索引；逐份檔案連結與選舉資料請以網站實際公告為準（<a href="https://bulletin.cec.gov.tw/" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline font-semibold">中央選舉委員會選舉及公民投票公報系統</a> 與 <a href="https://info.cec.gov.tw/" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline font-semibold">中央選舉委員會選舉專區</a>）之 115 年直轄市長及縣市長選舉公報原始 PDF 檔案。部分候選人於公報中使用圖片式政見排版，均可直接開啟原始 PDF 檢視完整圖文版面。
         </p>
@@ -4832,7 +4832,7 @@
     // Compute breadth (how many of the 6 issues have substantive policy text > 18 chars)
     CANDIDATES.forEach((c, idx) => {
       if (REVIEWED_POLICY_CORRECTIONS[c.id]) Object.assign(c, REVIEWED_POLICY_CORRECTIONS[c.id]);
-      c.bulletinType = '政見整理，待逐條核對';
+      c.bulletinType = REVIEWED_POLICY_CORRECTIONS[c.id] ? '已有查證摘要' : '政見整理，待核對';
       c.gender = BULLETIN_GENDER[c.id] || null;
       c.ocrExcerpts = OCR_VERIFIED_EXCERPTS[c.id] || [];
       c.pdfUrl = CITY_PDF_URLS[c.city] || 'https://bulletin.cec.gov.tw/';
@@ -5888,7 +5888,11 @@
       const sources = POLICY_SOURCES[candidate.id]?.[issue] || [];
       const verified = sources.some(source => source.verified && source.url && source.quote);
       const hasSummary = summary && !/未於公報單獨列項|未於公開摘要單獨列項|未單獨列出|本次摘要尚未確認/.test(summary);
-      const status = verified ? '有原始來源' : hasSummary ? '待核對' : '未查得';
+      const reviewedSummary = REVIEWED_POLICY_CORRECTIONS[candidate.id]?.issues?.[issue];
+      const status = verified ? '有原始來源'
+        : !hasSummary ? '未查得'
+        : reviewedSummary === summary ? '已有查證摘要・逐條引文待補'
+        : '待核對';
       return {status, summary, sources};
     }
 
@@ -5897,7 +5901,7 @@
       return `<strong>${record.status}</strong><p>${record.summary || '目前無摘要。'}</p>
         <details onclick="event.stopPropagation()"><summary>來源與核對資料</summary>
           <p><a href="${candidate.pdfUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">官方公報 PDF</a></p>
-          ${record.sources.length ? record.sources.map(source => `<p>${source.kind} · ${source.verified ? '已核對' : '待核對'} · ${source.date || '日期未確認'} · <a href="${source.url}" target="_blank" rel="noopener noreferrer">來源</a></p><blockquote>${source.quote || '原文待擷取'}</blockquote>`).join('') : '<p>逐條原文、頁碼與來源日期尚待補錄。</p>'}
+          ${record.sources.length ? record.sources.map(source => `<p>${source.kind} · ${source.verified ? '已核對' : '待核對'} · ${source.date || '日期未確認'} · <a href="${source.url}" target="_blank" rel="noopener noreferrer">來源</a></p><blockquote>${source.quote || '原文待擷取'}</blockquote>`).join('') : '<p>官方公報連結供回查。逐條原文、頁碼與來源日期尚待補錄。已有查證摘要可能綜合公報與其他公開資料。</p>'}
           <p><a href="https://gazette2026.taiwangogo.tw/scan/" target="_blank" rel="noopener noreferrer">民間公報姓名查詢</a></p>
         </details>`;
     }
