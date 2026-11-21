@@ -2150,7 +2150,7 @@
          VIEW 5: 10-QUESTION POLICY & GOVERNANCE PSYCHOLOGICAL TEST
          ========================================== -->
     <section id="view-quiz" class="space-y-4">
-      <div class="audit-notice" role="note"><strong>測試版｜政見原文逐項核對中</strong><br>本工具為民間整理。結果供政策探索，投票請自行判斷。政見以官方公報為準。<br>介面版次 2026-11-21.1 · <a href="https://info.cec.gov.tw/vote2026/">中選會選舉專區</a> · <a href="#sources">公報來源</a> · <a href="#quiz-method" onclick="showQuizMethod(event)">計分方式</a></div><div class="atlas-hero"><div class="atlas-copy"><p>POLICY COMPASS <i></i> 2026</p><h2>如果由你決定，<br>城市先做什麼？</h2><div>2026 直轄市長及縣市長選舉 · 11 月 28 日投票</div>
+      <div class="audit-notice" role="note"><strong>測試版｜政見原文逐項核對中</strong><br>本工具為民間整理。結果供政策探索，投票請自行判斷。政見以官方公報為準。<br>介面版次 2026-11-21.2 · <a href="https://info.cec.gov.tw/vote2026/">中選會選舉專區</a> · <a href="#sources">公報來源</a> · <a href="#quiz-method" onclick="showQuizMethod(event)">計分方式</a></div><div class="atlas-hero"><div class="atlas-copy"><p>POLICY COMPASS <i></i> 2026</p><h2>如果由你決定，<br>城市先做什麼？</h2><div>2026 直轄市長及縣市長選舉 · 11 月 28 日投票</div>
         <div class="quiz-rule">十題單選，選出你會優先推動的方案。可跳題或回頭修改。</div>
         <div>部分支持、沒把握或皆不符合可選不計分選項。十題完成才顯示結果。</div>
         <div>全臺情境測驗免選縣市。完成後依兩軸座標距離，列出全臺最近的候選人。</div>
@@ -6676,12 +6676,21 @@
     const DUEL_STORAGE = 'policy_compass_duels_v1';
     let duelRounds = [], duelVotes = [], duelPaused = false;
     let duelSelection = '', duelIssue = 'all', duelHistory = {};
+    let duelAvailableIssues = [], duelMissingPairs = [], duelUpdated = false;
     try { duelHistory = JSON.parse(sessionStorage.getItem(DUEL_STORAGE)) || {}; } catch {}
+
+    function duelSlate() {
+      return duelRounds.map(round => [round.key, ...round.pair.map(c => c.id)]);
+    }
+
+    function duelContent() {
+      return duelRounds.map(round => round.pair.map(c => c.issues[round.key]));
+    }
 
     function saveDuel() {
       if (!duelSelection) return;
       const key = duelSelection + '/' + duelIssue;
-      duelHistory[key] = {votes: duelVotes, slate: duelRounds.map(r => [r.key, ...r.pair.map(c => c.id)])};
+      duelHistory[key] = {votes: duelVotes, slate: duelSlate(), content: duelContent()};
       try { sessionStorage.setItem(DUEL_STORAGE, JSON.stringify(duelHistory)); } catch {}
     }
 
@@ -6694,12 +6703,14 @@
       const people = CANDIDATES.filter(c => c.city === city);
       const issueUse = {};
       const eligible = (candidate, key) => ['有原始來源','已有查證摘要・逐條引文待補'].includes(policyRecord(candidate,key).status);
-      const coveredIssues = new Set();
+      const issueCounts = Object.fromEntries(Object.keys(ISSUE_META).map(key => [key, 0]));
+      const missingPairs = [];
       for (let i = 0; i < people.length; i++) {
         for (let j = i + 1; j < people.length; j++) {
           const [a,b] = [people[i], people[j]];
           const keys = Object.keys(ISSUE_META).filter(key => eligible(a,key) && eligible(b,key) && a.issues[key] !== b.issues[key]);
-          keys.forEach(key => coveredIssues.add(key));
+          keys.forEach(key => issueCounts[key]++);
+          if (!(duelIssue === 'all' ? keys.length : keys.includes(duelIssue))) missingPairs.push([a,b]);
           const selected = duelIssue !== 'all' ? keys.filter(key => key === duelIssue) : people.length === 2
             ? keys : keys.sort((left,right) => (issueUse[left] || 0) - (issueUse[right] || 0)).slice(0,1);
           for (const key of selected) {
@@ -6709,8 +6720,16 @@
           }
         }
       }
+      duelAvailableIssues = Object.keys(ISSUE_META).filter(key => issueCounts[key]);
+      duelMissingPairs = missingPairs;
+      for (const option of document.getElementById('duel-issue').options) {
+        if (option.value === 'all') continue;
+        option.textContent = ISSUE_META[option.value].label + (city
+          ? issueCounts[option.value] ? '（' + issueCounts[option.value] + ' 場）' : '（摘要不足）'
+          : '');
+      }
       document.getElementById('duel-preview').textContent = city
-        ? people.length + ' 位候選人 · ' + duelRounds.length + ' 場 · 可選議題 ' + ([...coveredIssues].map(k => ISSUE_META[k].label).join('、') || '尚無') : '';
+        ? people.length + ' 位候選人 · ' + duelRounds.length + ' 場 · 可選議題 ' + (duelAvailableIssues.map(k => ISSUE_META[k].label).join('、') || '尚無') : '';
       if (city) {
         const coverage = people.map(candidate => duelRounds.filter(round => round.pair.includes(candidate)).length);
         const min = Math.min(...coverage), max = Math.max(...coverage);
@@ -6721,15 +6740,30 @@
           + (duelRounds.length > 7 ? '每七場提供分段休息。' : '');
       }
       const saved = duelHistory[city + '/' + duelIssue];
-      const slate = duelRounds.map(r => [r.key, ...r.pair.map(c => c.id)]);
-      duelVotes = !restart && saved && JSON.stringify(saved.slate) === JSON.stringify(slate)
-        && Array.isArray(saved.votes) && saved.votes.length <= duelRounds.length
-        && saved.votes.every((id,i) => id === null || duelRounds[i].pair.some(c => c.id === id)) ? saved.votes.slice() : [];
-      if (restart) saveDuel();
+      const slate = duelSlate();
+      const content = duelContent();
+      duelVotes = [];
+      if (!restart && Array.isArray(saved?.votes) && Array.isArray(saved.slate)) {
+        for (const [index, vote] of saved.votes.entries()) {
+          const samePair = JSON.stringify(saved.slate[index]) === JSON.stringify(slate[index]);
+          const sameText = !saved.content || JSON.stringify(saved.content[index]) === JSON.stringify(content[index]);
+          if (!samePair || !sameText || !duelRounds[index] || (vote !== null && !duelRounds[index].pair.some(c => c.id === vote))) break;
+          duelVotes.push(vote);
+        }
+      }
+      duelUpdated = !restart && Array.isArray(saved?.votes) && duelVotes.length < saved.votes.length;
+      if (restart || (!duelUpdated && duelVotes.length && !saved.content)) saveDuel();
       renderDuel(moveFocus);
     }
+    function switchDuelIssue(key) {
+      const select = document.getElementById('duel-issue');
+      select.value = key;
+      startDuel(duelSelection,false,true);
+    }
+
     function voteDuel(side) {
       const round=duelRounds[duelVotes.length];
+      duelUpdated = false;
       if (round && !duelPaused) duelVotes.push(side === null ? null : round.pair[side].id);
       duelPaused = duelVotes.length > 0 && duelVotes.length % 7 === 0 && duelVotes.length < duelRounds.length;
       saveDuel();
@@ -6747,7 +6781,11 @@
     }
     function renderDuel(moveFocus = true) {
       const el=document.getElementById('duel-play'), city=document.getElementById('duel-city').value;
-      if (!city || !duelRounds.length) { el.textContent=city?'此縣市尚無可用的同議題對決。':''; return; }
+      if (!city || !duelRounds.length) {
+        el.innerHTML = city ? '<p>目前摘要不足以組成本議題的對決。</p>' +
+          duelAvailableIssues.map(key => '<button type="button" class="rounded-lg border px-3 py-2" onclick="switchDuelIssue(this.value)" value="'+key+'">'+ISSUE_META[key].label+'</button>').join(' ') : '';
+        return;
+      }
       const round=duelRounds[duelVotes.length];
       if (duelPaused) {
         el.innerHTML = '<h3 tabindex="-1" class="font-bold mt-4">本段已完成</h3><button type="button" class="rounded-lg border px-3 py-2" onclick="duelPaused=false;renderDuel()">繼續下一段</button>';
@@ -6757,14 +6795,25 @@
         const stats=CANDIDATES.filter(c=>c.city===city).map(c=>({c,w:duelVotes.filter(id=>id===c.id).length,n:duelRounds.filter((r,i)=>duelVotes[i] !== null && r.pair.includes(c)).length}));
         const max=Math.max(...stats.map(s=>s.w));
         const skipped = duelVotes.filter(id => id === null).length;
-        const balanced = !skipped && (stats.length === 2 || stats.every(s => s.n === stats.length - 1));
+        const effective = duelRounds.length - skipped;
+        const balanced = stats.length === 2 || (!skipped && stats.every(s => s.n === stats.length - 1));
         const name = c => getDisplayName(c);
-        const single = duelRounds.length === 1 && !skipped;
+        const single = effective === 1;
+        const effectiveRound = single && duelVotes.findIndex(id => id !== null);
         const selected = single && stats.find(s => s.w === 1);
-        const heading = skipped === duelRounds.length ? '本輪所有場次均已跳過' : single ? '在' + ISSUE_META[duelRounds[0].key].label + '議題，你選了 ' + name(selected.c) : balanced ? '本輪選中最多次 · '+stats.filter(s=>s.w===max).map(s=>name(s.c)).join('、') : '本輪政策選擇紀錄';
+        const heading = skipped === duelRounds.length ? '本輪所有場次均已跳過' : single ? '在' + ISSUE_META[duelRounds[effectiveRound].key].label + '議題，你選了 ' + name(selected.c) : balanced ? '有效比較 '+effective+' 場 · '+stats.filter(s=>s.w===max).map(s=>name(s.c)).join('、')+'（各選中 '+max+' 次）' : '本輪政策選擇紀錄';
         const explanation = balanced ? '每位候選人出場次數相同，選中次數相同者並列。' : '請依逐場政策選擇與各人的有效出場次數解讀。無共同議題或已跳過的場次皆不計入。';
-        el.innerHTML='<h3 tabindex="-1" class="font-bold mt-4">'+heading+'</h3><p>'+explanation+'</p><p>跳過 '+skipped+' 場。以下出場次數只計入有選擇的場次。</p>'+stats.map(s=>name(s.c)+'：'+(s.n?s.w+' 次／出場 '+s.n+' 次':'沒有有效比較')).join('；')+'<details><summary>回看逐場選擇與來源</summary>'+duelRounds.map((r,i)=>'<p><strong>第 '+(i+1)+' 場 · '+ISSUE_META[r.key].label+(duelVotes[i]===null?'（已跳過）':'')+'</strong></p>'+r.pair.map(c=>'<div>'+name(c)+(duelVotes[i]===c.id?'（你的選擇）':'')+(state.blindMode ? c.issues[r.key] : renderPolicyEvidence(c,r.key))+'</div>').join('')).join('')+'</details><button onclick="restartDuel()">重新對決</button>';
+        el.innerHTML='<h3 tabindex="-1" class="font-bold mt-4">'+heading+'</h3><p>'+explanation+'</p><p>完成 '+duelRounds.length+' 場，有效選擇 '+effective+' 場，跳過 '+skipped+' 場。以下出場次數只計入有選擇的場次。</p>'+stats.map(s=>name(s.c)+'：'+(s.n?s.w+' 次／出場 '+s.n+' 次':'沒有有效比較')).join('；')+'<details><summary>回看逐場選擇與來源</summary>'+duelRounds.map((r,i)=>'<p><strong>第 '+(i+1)+' 場 · '+ISSUE_META[r.key].label+(duelVotes[i]===null?'（已跳過）':'')+'</strong></p>'+r.pair.map(c=>'<div>'+name(c)+(duelVotes[i]===c.id?'（你的選擇）':'')+(state.blindMode ? c.issues[r.key] : renderPolicyEvidence(c,r.key))+'</div>').join('')).join('')+'</details><button onclick="restartDuel()">重新對決</button>';
       }
+      if (!round) {
+        const issueTotals = Object.keys(ISSUE_META).map(key => {
+          const count = duelRounds.filter(r => r.key === key).length;
+          return count ? ISSUE_META[key].short+' '+count+' 場' : '';
+        }).filter(Boolean);
+        el.insertAdjacentHTML('beforeend', '<details><summary>查看比較覆蓋範圍</summary><p>'+issueTotals.join('、')+'</p>' +
+          (duelMissingPairs.length ? '<p>未安排比較的組合</p><ul>'+duelMissingPairs.map(pair => '<li>'+pair.map(getDisplayName).join('與')+'</li>').join('')+'</ul>' : '')+'</details>');
+      }
+      if (duelUpdated) el.insertAdjacentHTML('afterbegin', '<p role="status">題卡已更新，已保留更新前可沿用的作答。請從目前場次繼續。</p>');
       if (round && !duelPaused) el.insertAdjacentHTML('beforeend', '<button type="button" class="mt-2 rounded-lg border px-3 py-2" onclick="voteDuel(null)">無法二選一，跳過本場</button><p class="text-xs mt-2">題卡採本站整理的政策摘要，核對狀態與公報入口可在結果中查看。</p>');
       el.insertAdjacentHTML('afterbegin', '<p class="mt-3">已完成 '+duelVotes.length+'／'+duelRounds.length+' 場</p><progress aria-label="對決進度" value="'+duelVotes.length+'" max="'+duelRounds.length+'"></progress>');
       if (duelVotes.length) el.insertAdjacentHTML('beforeend', '<button type="button" class="rounded-lg border px-3 py-2" onclick="previousDuel()">回上一場修改</button>');
