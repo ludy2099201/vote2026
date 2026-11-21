@@ -2150,7 +2150,7 @@
          VIEW 5: 10-QUESTION POLICY & GOVERNANCE PSYCHOLOGICAL TEST
          ========================================== -->
     <section id="view-quiz" class="space-y-4">
-      <div class="audit-notice" role="note"><strong>測試版｜政見原文逐項核對中</strong><br>本工具為民間整理。結果供政策探索，投票請自行判斷。政見以官方公報為準。<br>介面版次 2026-11-21.2 · <a href="https://info.cec.gov.tw/vote2026/">中選會選舉專區</a> · <a href="#sources">公報來源</a> · <a href="#quiz-method" onclick="showQuizMethod(event)">計分方式</a></div><div class="atlas-hero"><div class="atlas-copy"><p>POLICY COMPASS <i></i> 2026</p><h2>如果由你決定，<br>城市先做什麼？</h2><div>2026 直轄市長及縣市長選舉 · 11 月 28 日投票</div>
+      <div class="audit-notice" role="note"><strong>測試版｜政見原文逐項核對中</strong><br>本工具為民間整理。結果供政策探索，投票請自行判斷。政見以官方公報為準。<br>介面版次 2026-11-21.3 · <a href="https://info.cec.gov.tw/vote2026/">中選會選舉專區</a> · <a href="#sources">公報來源</a> · <a href="#quiz-method" onclick="showQuizMethod(event)">計分方式</a></div><div class="atlas-hero"><div class="atlas-copy"><p>POLICY COMPASS <i></i> 2026</p><h2>如果由你決定，<br>城市先做什麼？</h2><div>2026 直轄市長及縣市長選舉 · 11 月 28 日投票</div>
         <div class="quiz-rule">十題單選，選出你會優先推動的方案。可跳題或回頭修改。</div>
         <div>部分支持、沒把握或皆不符合可選不計分選項。十題完成才顯示結果。</div>
         <div>全臺情境測驗免選縣市。完成後依兩軸座標距離，列出全臺最近的候選人。</div>
@@ -6705,6 +6705,7 @@
       const eligible = (candidate, key) => ['有原始來源','已有查證摘要・逐條引文待補'].includes(policyRecord(candidate,key).status);
       const issueCounts = Object.fromEntries(Object.keys(ISSUE_META).map(key => [key, 0]));
       const missingPairs = [];
+      const eligibleKeysByRound = [];
       for (let i = 0; i < people.length; i++) {
         for (let j = i + 1; j < people.length; j++) {
           const [a,b] = [people[i], people[j]];
@@ -6716,11 +6717,35 @@
           for (const key of selected) {
             const alternate = (i + j + duelRounds.length) % 2;
             duelRounds.push({pair: alternate ? [a,b] : [b,a], key});
+            eligibleKeysByRound.push(keys);
             issueUse[key] = (issueUse[key] || 0) + 1;
           }
         }
       }
       duelAvailableIssues = Object.keys(ISSUE_META).filter(key => issueCounts[key]);
+      if (duelIssue === 'all' && people.length > 2) {
+        // Move a comparison from a repeated issue to an unused one, following
+        // a chain of eligible assignments when a direct swap is unavailable.
+        function coverIssue(key, visited) {
+          if (visited.has(key)) return false;
+          visited.add(key);
+          for (const [index, round] of duelRounds.entries()) {
+            const previous = round.key;
+            if (previous === key || !eligibleKeysByRound[index].includes(key)) continue;
+            if (issueUse[previous] > 1 || coverIssue(previous, visited)) {
+              round.key = key;
+              issueUse[previous]--;
+              issueUse[key] = (issueUse[key] || 0) + 1;
+              return true;
+            }
+          }
+          return false;
+        }
+
+        for (const key of duelAvailableIssues) {
+          if (!issueUse[key]) coverIssue(key, new Set());
+        }
+      }
       duelMissingPairs = missingPairs;
       for (const option of document.getElementById('duel-issue').options) {
         if (option.value === 'all') continue;
@@ -6814,7 +6839,7 @@
           (duelMissingPairs.length ? '<p>未安排比較的組合</p><ul>'+duelMissingPairs.map(pair => '<li>'+pair.map(getDisplayName).join('與')+'</li>').join('')+'</ul>' : '')+'</details>');
       }
       if (duelUpdated) el.insertAdjacentHTML('afterbegin', '<p role="status">題卡已更新，已保留更新前可沿用的作答。請從目前場次繼續。</p>');
-      if (round && !duelPaused) el.insertAdjacentHTML('beforeend', '<button type="button" class="mt-2 rounded-lg border px-3 py-2" onclick="voteDuel(null)">無法二選一，跳過本場</button><p class="text-xs mt-2">題卡採本站整理的政策摘要，核對狀態與公報入口可在結果中查看。</p>');
+      if (round && !duelPaused) el.insertAdjacentHTML('beforeend', '<button type="button" class="mt-2 rounded-lg border px-3 py-2" onclick="voteDuel(null)">無法二選一，跳過本場</button><p class="text-xs mt-2">題卡使用本站整理的摘要。完成後可逐場查看摘要的核對狀態、已有的摘錄與公報入口。</p>');
       el.insertAdjacentHTML('afterbegin', '<p class="mt-3">已完成 '+duelVotes.length+'／'+duelRounds.length+' 場</p><progress aria-label="對決進度" value="'+duelVotes.length+'" max="'+duelRounds.length+'"></progress>');
       if (duelVotes.length) el.insertAdjacentHTML('beforeend', '<button type="button" class="rounded-lg border px-3 py-2" onclick="previousDuel()">回上一場修改</button>');
       if (moveFocus) el.querySelector('h3')?.focus();
