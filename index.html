@@ -2156,7 +2156,7 @@
          VIEW 5: 10-QUESTION POLICY & GOVERNANCE PSYCHOLOGICAL TEST
          ========================================== -->
     <section id="view-quiz" class="space-y-4">
-      <div class="audit-notice" role="note"><strong>測試版｜政見原文逐項核對中</strong><br>本工具為民間整理。結果供政策探索，投票請自行判斷。政見以官方公報為準。<br>介面版次 2026-11-21.6 · <a href="https://info.cec.gov.tw/vote2026/">中選會選舉專區</a> · <a href="#sources">公報來源</a> · <a href="#quiz-method" onclick="showQuizMethod(event)">計分方式</a></div><div class="atlas-hero"><div class="atlas-copy"><p>POLICY COMPASS <i></i> 2026</p><h2>如果由你決定，<br>城市先做什麼？</h2><div>2026 直轄市長及縣市長選舉 · 11 月 28 日投票</div>
+      <div class="audit-notice" role="note"><strong>測試版｜政見原文逐項核對中</strong><br>本工具為民間整理。結果供政策探索，投票請自行判斷。政見以官方公報為準。<br>介面版次 2026-11-21.7 · <a href="https://info.cec.gov.tw/vote2026/">中選會選舉專區</a> · <a href="#sources">公報來源</a> · <a href="#quiz-method" onclick="showQuizMethod(event)">計分方式</a></div><div class="atlas-hero"><div class="atlas-copy"><p>POLICY COMPASS <i></i> 2026</p><h2>如果由你決定，<br>城市先做什麼？</h2><div>2026 直轄市長及縣市長選舉 · 11 月 28 日投票</div>
         <div class="quiz-rule">十題單選，選出你會優先推動的方案。可跳題或回頭修改。</div>
         <div>每個方案可能包含多項承諾。若只支持部分承諾、沒有符合的方案或還不確定，可直接選擇對應回答。</div>
         <div>全臺情境測驗免選縣市。完成十題且至少三題有效計分、兩軸各有至少兩題提供方向，才顯示全臺座標比較。</div>
@@ -6487,6 +6487,17 @@
       }
     ];
 
+    const CHILDCARE_PARTS = ['生育現金補助','育兒津貼','育兒家庭減工時','臨時托育','免費營養午餐','婚育宅優先承租'];
+    let childcareParts = [];
+
+    function toggleChildcarePart(index, checked) {
+      if (state.quizAnswers[0] !== 'P' || !Object.hasOwn(CHILDCARE_PARTS,index)) return;
+      childcareParts = checked ? [...new Set([...childcareParts,index])] : childcareParts.filter(item => item !== index);
+      persistQuizState();
+      const review = document.getElementById('childcare-review');
+      if (review) review.textContent = childcareParts.map(item => CHILDCARE_PARTS[item]).join('、');
+    }
+
     const QUIZ_NON_SCORING_OPTIONS = [
       {code: 'P', tag: '我只支持部分承諾'},
       {code: 'D0', tag: '沒有方案符合我的偏好'},
@@ -6514,7 +6525,7 @@
         if (!quizRetention) { localStorage.removeItem(QUIZ_STORAGE_KEY); return; }
         localStorage.setItem(QUIZ_STORAGE_KEY, JSON.stringify({
           expiresAt: Date.now() + quizRetention * 86400000, retention: quizRetention,
-          answers: state.quizAnswers, step: state.quizStep, scope: state.quizScope
+          answers: state.quizAnswers, childcareParts, step: state.quizStep, scope: state.quizScope
         }));
       } catch (e) { /* Private browsing or restrictive storage */ }
     }
@@ -6533,6 +6544,9 @@
             const code = data.answers[i];
             if (q.options.some(opt => opt.code === code)) state.quizAnswers[i] = code;
           });
+        }
+        if (state.quizAnswers[0] === 'P' && Array.isArray(data.childcareParts)) {
+          childcareParts = [...new Set(data.childcareParts.filter(index => Number.isInteger(index) && Object.hasOwn(CHILDCARE_PARTS,index)))];
         }
         if (Number.isInteger(data.step)) state.quizStep = Math.max(0, Math.min(QUIZ_QUESTIONS.length - 1, data.step));
         if (CITY_ORDER.includes(data.scope)) state.quizScope = data.scope;
@@ -6579,8 +6593,10 @@
       if (!q || !q.options.some(o => o.code === optCode)) return;
       const wasComplete = Object.keys(state.quizAnswers).length === QUIZ_QUESTIONS.length;
       state.quizAnswers[qIdx] = optCode;
+      if (qIdx === 0 && optCode !== 'P') childcareParts = [];
+      const choosingChildcareParts = qIdx === 0 && optCode === 'P';
       // One-tap flow until completion; after completion, edits don't trigger navigation.
-      if (!wasComplete && state.quizDisplayMode === 'step') {
+      if (!choosingChildcareParts && !wasComplete && state.quizDisplayMode === 'step') {
         const nextIdx = QUIZ_QUESTIONS.findIndex((_,i) => i > qIdx && !state.quizAnswers[i]);
         if (Object.keys(state.quizAnswers).length < QUIZ_QUESTIONS.length) state.quizStep = nextIdx >= 0 ? nextIdx : (QUIZ_QUESTIONS.findIndex((_,i) => !state.quizAnswers[i]) + QUIZ_QUESTIONS.length) % QUIZ_QUESTIONS.length;
       }
@@ -6588,7 +6604,9 @@
       persistQuizState();
       updateQuizBadgeUI();
       renderQuizView();
-      if (!wasComplete && Object.keys(state.quizAnswers).length === QUIZ_QUESTIONS.length) {
+      if (choosingChildcareParts) {
+        document.querySelector('#childcare-parts input')?.focus();
+      } else if (!wasComplete && Object.keys(state.quizAnswers).length === QUIZ_QUESTIONS.length) {
         requestAnimationFrame(() => {
           const title = document.getElementById('quiz-match-title');
           title?.focus({preventScroll:true});
@@ -6604,6 +6622,7 @@
     }
 
     function fillDemoQuizAnswers() {
+      childcareParts = [];
       const codes = ['A', 'B', 'C', 'D'];
       QUIZ_QUESTIONS.forEach((_, idx) => {
         state.quizAnswers[idx] = codes[Math.floor(Math.random() * codes.length)];
@@ -6633,6 +6652,7 @@
       startDuel('');
       document.getElementById('local-duel').open = false;
       state.quizAnswers = {};
+      childcareParts = [];
       state.quizStep = 0;
       state.userSpectrumProfile = null;
       try { localStorage.removeItem(QUIZ_STORAGE_KEY); } catch {}
@@ -7062,6 +7082,11 @@
                   `;
                 }).join('')}
               </div>
+              ${idx === 0 && selectedCode === 'P' ? `<fieldset id="childcare-parts" class="mt-4 rounded-lg border p-3">
+                <legend class="font-semibold">你支持哪些育兒措施？</legend>
+                <p class="text-sm">可複選，也可直接下一題。細項會保存在作答回顧，分數維持不計。</p>
+                ${CHILDCARE_PARTS.map((label,index) => `<label class="flex min-h-[44px] items-center gap-2"><input type="checkbox" ${childcareParts.includes(index) ? 'checked' : ''} onchange="toggleChildcarePart(${index},this.checked)">${label}</label>`).join('')}
+              </fieldset>` : ''}
               <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2 text-xs">
                 <button type="button" onclick="jumpToQuizStep(${idx-1})" ${idx === 0 ? 'disabled' : ''} class="rounded-lg px-3 py-2 font-semibold border border-slate-200 text-slate-700 disabled:opacity-30">上一題</button>
                 <span class="text-slate-400">${idx+1} / ${QUIZ_QUESTIONS.length}</span>
@@ -7108,7 +7133,7 @@
       const userPseudoCand = { radar: prof.radar, party: 'other' };
 
       rContainer.innerHTML = `
-        <div class="audit-notice" role="note"><strong>測試版｜政見原文逐項核對中</strong><br>本工具為民間整理。結果供政策探索，投票請自行判斷。政見以官方公報為準。<br>介面版次 2026-11-21.6 · <a href="https://info.cec.gov.tw/vote2026/">中選會選舉專區</a> · <a href="#sources">公報來源</a> · <a href="#quiz-method" onclick="showQuizMethod(event)">計分方式</a></div>
+        <div class="audit-notice" role="note"><strong>測試版｜政見原文逐項核對中</strong><br>本工具為民間整理。結果供政策探索，投票請自行判斷。政見以官方公報為準。<br>介面版次 2026-11-21.7 · <a href="https://info.cec.gov.tw/vote2026/">中選會選舉專區</a> · <a href="#sources">公報來源</a> · <a href="#quiz-method" onclick="showQuizMethod(event)">計分方式</a></div>
         <section class="match-result rounded-2xl bg-indigo-50 border border-indigo-200 p-5 space-y-3 mb-4">
           <p class="text-sm text-indigo-800 font-bold">全臺候選人</p>
           <h3 id="quiz-match-title" tabindex="-1" class="text-xl font-extrabold">你的政策議題偏好</h3>
@@ -7135,7 +7160,7 @@
               ${QUIZ_QUESTIONS.map((question, index) => {
                 const option = question.options.find(item => item.code === state.quizAnswers[index]);
                 return `<li><button type="button" class="min-h-[44px] text-left underline" onclick="jumpToQuizStep(${index})">${question.domain}</button>
-                  <p>${policyDisplayText(option.tag)}${option.radar ? '' : '（不計分）'}</p></li>`;
+                  <p>${policyDisplayText(option.tag)}${option.radar ? '' : '（不計分）'}</p>${index === 0 && option.code === 'P' ? `<p id="childcare-review">${childcareParts.map(item => CHILDCARE_PARTS[item]).join('、')}</p>` : ''}</li>`;
               }).join('')}
             </ol>
           </details>
