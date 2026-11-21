@@ -2156,7 +2156,7 @@
          VIEW 5: 10-QUESTION POLICY & GOVERNANCE PSYCHOLOGICAL TEST
          ========================================== -->
     <section id="view-quiz" class="space-y-4">
-      <div class="audit-notice" role="note"><strong>測試版｜政見原文逐項核對中</strong><br>本工具為民間整理。結果供政策探索，投票請自行判斷。政見以官方公報為準。<br>介面版次 2026-11-21.8 · <a href="https://info.cec.gov.tw/vote2026/">中選會選舉專區</a> · <a href="#sources">公報來源</a> · <a href="#quiz-method" onclick="showQuizMethod(event)">計分方式</a></div><div class="atlas-hero"><div class="atlas-copy"><p>POLICY COMPASS <i></i> 2026</p><h2>如果由你決定，<br>城市先做什麼？</h2><div>2026 直轄市長及縣市長選舉 · 11 月 28 日投票</div>
+      <div class="audit-notice" role="note"><strong>測試版｜政見原文逐項核對中</strong><br>本工具為民間整理。結果供政策探索，投票請自行判斷。政見以官方公報為準。<br>介面版次 2026-11-21.9 · <a href="https://info.cec.gov.tw/vote2026/">中選會選舉專區</a> · <a href="#sources">公報來源</a> · <a href="#quiz-method" onclick="showQuizMethod(event)">計分方式</a></div><div class="atlas-hero"><div class="atlas-copy"><p>POLICY COMPASS <i></i> 2026</p><h2>如果由你決定，<br>城市先做什麼？</h2><div>2026 直轄市長及縣市長選舉 · 11 月 28 日投票</div>
         <div class="quiz-rule">十題單選，選出你會優先推動的方案。可跳題或回頭修改。</div>
         <div>每個方案可能包含多項承諾。若只支持部分承諾、沒有符合的方案或還不確定，可直接選擇對應回答。</div>
         <div>全臺情境測驗免選縣市。完成十題且至少三題有效計分、兩軸各有至少兩題提供方向，才顯示全臺座標比較。</div>
@@ -6506,6 +6506,8 @@
       const current = quizParts[question] || [];
       quizParts[question] = checked ? [...new Set([...current,index])] : current.filter(item => item !== index);
       persistQuizState();
+      const count = document.getElementById('quiz-parts-count-'+question);
+      if (count) count.textContent = '已選 ' + quizParts[question].length + ' 項';
       const review = document.getElementById('quiz-parts-review-'+question);
       if (review) review.textContent = quizParts[question].map(item => QUIZ_PARTS[question][item]).join('、');
     }
@@ -6807,7 +6809,7 @@
       const source = duelCardSource(candidate,key);
       if (!source) return renderPolicyEvidence(candidate,key);
       return renderDuelCard(candidate,key) + '<details><summary>公報來源</summary><p>選舉公報政見標題「'+source.heading+'」</p>'
-        + '<p>上方題卡按公報可辨識內容整理。</p><a href="'+TAOYUAN_TRANSIT_BULLETIN+'" target="_blank" rel="noopener noreferrer">桃園市選舉公報 PDF</a></details>';
+        + '<p>對照狀態：已對照公報所載交通主張。題卡為摘要，PDF 頁碼待補。</p><a href="'+TAOYUAN_TRANSIT_BULLETIN+'" target="_blank" rel="noopener noreferrer">桃園市選舉公報 PDF</a></details>';
     }
 
     function duelContent() {
@@ -6852,7 +6854,7 @@
           }
         }
       }
-      duelAvailableIssues = Object.keys(ISSUE_META).filter(key => issueCounts[key]);
+      duelAvailableIssues = Object.entries(issueCounts).filter(([,count]) => count > 0);
       if (duelIssue === 'all' && people.length > 2) {
         // Move a comparison from a repeated issue to an unused one, following
         // a chain of eligible assignments when a direct swap is unavailable.
@@ -6872,7 +6874,7 @@
           return false;
         }
 
-        for (const key of duelAvailableIssues) {
+        for (const [key] of duelAvailableIssues) {
           if (!issueUse[key]) coverIssue(key, new Set());
         }
       }
@@ -6884,7 +6886,7 @@
           : '');
       }
       document.getElementById('duel-preview').textContent = city
-        ? people.length + ' 位候選人 · ' + duelRounds.length + ' 場 · 可選議題 ' + (duelAvailableIssues.map(k => ISSUE_META[k].label).join('、') || '尚無') : '';
+        ? people.length + ' 位候選人 · ' + duelRounds.length + ' 場 · 可選議題 ' + (duelAvailableIssues.map(([key]) => ISSUE_META[key].label).join('、') || '尚無') : '';
       if (city) {
         const coverage = people.map(candidate => duelRounds.filter(round => round.pair.includes(candidate)).length);
         const min = Math.min(...coverage), max = Math.max(...coverage);
@@ -6937,8 +6939,8 @@
     function renderDuel(moveFocus = true) {
       const el=document.getElementById('duel-play'), city=document.getElementById('duel-city').value;
       if (!city || !duelRounds.length) {
-        el.innerHTML = city ? '<p>目前摘要不足以組成本議題的對決。</p>' +
-          duelAvailableIssues.map(key => '<button type="button" class="rounded-lg border px-3 py-2" onclick="switchDuelIssue(this.value)" value="'+key+'">'+ISSUE_META[key].label+'</button>').join(' ') : '';
+        el.innerHTML = city ? '<p>目前摘要不足以在 '+city+' 安排「'+(ISSUE_META[duelIssue]?.label || '綜合比較')+'」對決。</p>' +
+          (duelAvailableIssues.length ? '<p>改選有題目的議題</p><div class="flex flex-wrap gap-2">' + duelAvailableIssues.map(([key,count]) => '<button type="button" class="min-h-[44px] rounded-lg border px-3 py-2" onclick="switchDuelIssue(this.value)" value="'+key+'">'+ISSUE_META[key].label+'（'+count+' 場）</button>').join('')+'</div>' : '<p>請從上方縣市選單改選地區。</p>') : '';
         return;
       }
       const round=duelRounds[duelVotes.length];
@@ -6975,13 +6977,23 @@
       if (moveFocus) el.querySelector('h3')?.focus();
     }
 
+    function returnToQuizReview() {
+      const review = document.getElementById('quiz-answer-review');
+      if (!review) return;
+      review.open = true;
+      const summary = review.querySelector('summary');
+      summary.focus({preventScroll:true});
+      summary.scrollIntoView({block:'start'});
+    }
+
     function enterQuiz() {
       const done = state.userSpectrumProfile?.answeredCount === QUIZ_QUESTIONS.length;
-      if (!done) {
+      const editingParts = !done && state.quizAnswers[state.quizStep] === 'P';
+      if (!done && !editingParts) {
         const next = QUIZ_QUESTIONS.findIndex((_, i) => !state.quizAnswers[i]);
         jumpToQuizStep(Math.max(0, next));
       }
-      const target = document.getElementById(done ? 'quiz-match-title' : 'quiz-question-heading-' + state.quizStep);
+      const target = document.getElementById(done && !editingParts ? 'quiz-match-title' : 'quiz-question-heading-' + state.quizStep);
       target?.focus({preventScroll:true});
       target?.scrollIntoView({block:'start'});
     }
@@ -7100,12 +7112,14 @@
               </div>
               ${selectedCode === 'P' ? `<fieldset id="quiz-parts-${idx}" class="mt-4 rounded-lg border p-3">
                 <legend class="font-semibold">你支持哪些措施？</legend>
-                <p class="text-sm">可複選，也可直接下一題。細項會保存在作答回顧，分數維持不計。</p>
+                <p class="text-sm">選填。此處列出本題的常見措施，勾選只記錄在答案回顧。這題計入完成進度，座標與六軸分數僅採計分答案。</p>
                 ${QUIZ_PARTS[idx].map((label,index) => `<label class="flex min-h-[44px] items-center gap-2"><input type="checkbox" ${(quizParts[idx] || []).includes(index) ? 'checked' : ''} onchange="toggleQuizPart(${idx},${index},this.checked)">${label}</label>`).join('')}
+                <p class="text-xs mt-2 text-slate-600" aria-live="polite" id="quiz-parts-count-${idx}">已選 ${(quizParts[idx] || []).length} 項</p>
               </fieldset>` : ''}
               <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2 text-xs">
                 <button type="button" onclick="jumpToQuizStep(${idx-1})" ${idx === 0 ? 'disabled' : ''} class="rounded-lg px-3 py-2 font-semibold border border-slate-200 text-slate-700 disabled:opacity-30">上一題</button>
-                <span class="text-slate-400">${idx+1} / ${QUIZ_QUESTIONS.length}</span>
+                <span class="text-slate-600">${idx+1} / ${QUIZ_QUESTIONS.length}</span>
+                ${state.userSpectrumProfile?.answeredCount === QUIZ_QUESTIONS.length ? '<button type="button" class="rounded-lg px-3 py-2 font-semibold border" onclick="returnToQuizReview()">查看答案回顧</button>' : ''}
                 <button type="button" onclick="jumpToQuizStep(${idx+1})" ${idx === QUIZ_QUESTIONS.length-1 ? 'disabled' : ''} class="rounded-lg px-3 py-2 font-semibold border border-slate-200 text-slate-700 disabled:opacity-30">下一題</button>
               </div>
             </article>
@@ -7149,7 +7163,7 @@
       const userPseudoCand = { radar: prof.radar, party: 'other' };
 
       rContainer.innerHTML = `
-        <div class="audit-notice" role="note"><strong>測試版｜政見原文逐項核對中</strong><br>本工具為民間整理。結果供政策探索，投票請自行判斷。政見以官方公報為準。<br>介面版次 2026-11-21.8 · <a href="https://info.cec.gov.tw/vote2026/">中選會選舉專區</a> · <a href="#sources">公報來源</a> · <a href="#quiz-method" onclick="showQuizMethod(event)">計分方式</a></div>
+        <div class="audit-notice" role="note"><strong>測試版｜政見原文逐項核對中</strong><br>本工具為民間整理。結果供政策探索，投票請自行判斷。政見以官方公報為準。<br>介面版次 2026-11-21.9 · <a href="https://info.cec.gov.tw/vote2026/">中選會選舉專區</a> · <a href="#sources">公報來源</a> · <a href="#quiz-method" onclick="showQuizMethod(event)">計分方式</a></div>
         <section class="match-result rounded-2xl bg-indigo-50 border border-indigo-200 p-5 space-y-3 mb-4">
           <p class="text-sm text-indigo-800 font-bold">全臺候選人</p>
           <h3 id="quiz-match-title" tabindex="-1" class="text-xl font-extrabold">你的政策議題偏好</h3>
@@ -7170,7 +7184,7 @@
             </div>
           </div>
 
-          <details class="quiz-storage">
+          <details id="quiz-answer-review" class="quiz-storage">
             <summary>回看十題答案</summary>
             <ol class="space-y-2 mt-2">
               ${QUIZ_QUESTIONS.map((question, index) => {
