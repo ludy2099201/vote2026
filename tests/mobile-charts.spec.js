@@ -37,6 +37,30 @@ async function tooltipInside(page) {
   expect(b.y+b.height).toBeLessThanOrEqual(v.height);
 }
 
+async function tapOccludedMarker(page, svg, overlapRegion = false) {
+  await svg.scrollIntoViewIfNeeded();
+  const marker = await svg.evaluate((svg,overlapRegion) => {
+    for (const hit of svg.querySelectorAll('.chart-hit')) {
+      const others = overlapRegion ? [...svg.querySelectorAll('.chart-hit')].filter(h=>h!==hit) : [hit];
+      for (const other of others) {
+      const local = new DOMPoint(hit.cx.baseVal.value*.55+other.cx.baseVal.value*.45,hit.cy.baseVal.value*.55+other.cy.baseVal.value*.45);
+      const distance = h => Math.hypot(local.x-h.cx.baseVal.value,local.y-h.cy.baseVal.value);
+      if (distance(hit)>hit.r.baseVal.value || [...svg.querySelectorAll('.chart-hit')].some(h=>distance(h)<distance(hit)-.01)) continue;
+      const point = local.matrixTransform(svg.getScreenCTM());
+      const covering = document.elementFromPoint(point.x,point.y);
+      if (covering?.matches('.chart-hit') && covering.parentElement !== hit.parentElement) {
+        return {x:point.x-visualViewport.offsetLeft,y:point.y-visualViewport.offsetTop,tip:hit.parentElement.dataset.chartTip,id:hit.parentElement.getAttribute('onclick')?.match(/'([^']+)'/)?.[1]};
+      }
+      }
+    }
+    return null;
+  },overlapRegion);
+  expect(marker, 'fixture must contain a marker covered by another hit circle').not.toBeNull();
+  await page.touchscreen.tap(marker.x,marker.y);
+  await expect(page.locator('#chart-tooltip')).toHaveText(marker.tip);
+  if (marker.id) expect(await page.evaluate(()=>state.selectedCandidateId)).toBe(marker.id);
+}
+
 for (const width of [320,375,414,480]) {
   test.describe(`${width}px touch`, () => {
     test.use({viewport:{width,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});
@@ -44,6 +68,7 @@ for (const width of [320,375,414,480]) {
       await page.goto('/#spectrum');
       await page.evaluate(()=>document.documentElement.style.scrollBehavior='auto');
       const scatter = page.locator('#spectrum-svg');
+      await tapOccludedMarker(page,scatter);
       for (const mode of ['orientation','density']) {
         await page.locator(`#btn-spec-mode-${mode}`).click();
         const cards = page.locator('#quadrant-summary-cards');
@@ -91,6 +116,7 @@ for (const width of [320,375,414,480]) {
       expect(g.outsideSVG).toBe(0);
       expect(g.outsideViewport).toBe(0);
       expect(g.minFont).toBeGreaterThanOrEqual(9.5);
+      await tapOccludedMarker(page,radar,true);
       await radar.locator('.radar-vertex').last().locator('.chart-hit').tap();
       await tooltipInside(page);
       await expect(page.locator('#chart-tooltip')).toContainText('/ 100');

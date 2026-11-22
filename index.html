@@ -7253,6 +7253,25 @@
       tip.style.top = Math.max(8, Math.min(innerHeight - box.height - 8, rect.bottom + 8)) + 'px';
     }
 
+    let chartPointer;
+    document.addEventListener('pointerdown', event => {
+      chartPointer = {svg:event.target.ownerSVGElement,x:event.clientX,y:event.clientY};
+    }, true);
+    document.addEventListener('click', event => {
+      if (!event.target.matches('.chart-hit')) return;
+      const svg = event.target.ownerSVGElement;
+      const pointer = chartPointer?.svg === svg ? chartPointer : {x:event.clientX,y:event.clientY};
+      chartPointer = null;
+      const point = new DOMPoint(pointer.x, pointer.y).matrixTransform(svg.getScreenCTM().inverse());
+      let nearest, distance = Infinity;
+      svg.querySelectorAll('.chart-hit').forEach(hit => {
+        const d = Math.hypot(hit.cx.baseVal.value-point.x, hit.cy.baseVal.value-point.y);
+        if (d < distance) { nearest = hit.parentElement; distance = d; }
+      });
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      nearest?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    }, true);
     document.addEventListener('click', event => {
       const target = event.target.closest('[data-chart-tip]');
       if (target) {
