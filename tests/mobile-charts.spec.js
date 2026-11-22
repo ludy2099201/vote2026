@@ -29,12 +29,11 @@ async function chartGeometry(svg, scatter = false) {
 async function tooltipInside(page) {
   const tip = page.locator('#chart-tooltip');
   await expect(tip).toBeVisible();
-  const b = await tip.boundingBox();
   const v = page.viewportSize();
-  expect(b.x).toBeGreaterThanOrEqual(0);
-  expect(b.y).toBeGreaterThanOrEqual(0);
-  expect(b.x+b.width).toBeLessThanOrEqual(v.width);
-  expect(b.y+b.height).toBeLessThanOrEqual(v.height);
+  await expect.poll(async () => {
+    const b = await tip.boundingBox();
+    return !!b && b.x >= 0 && b.y >= 0 && b.x+b.width <= v.width && b.y+b.height <= v.height;
+  }).toBe(true);
 }
 
 async function tapOccludedMarker(page, svg, overlapRegion = false) {
