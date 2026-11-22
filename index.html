@@ -7233,7 +7233,9 @@
     // ============================================================================
     // 8. RENDERING: VIEW 2 — 2D POLICY SPECTRUM & 6-AXIS RADAR
     // ============================================================================
-    function hideChartTooltip() {
+    let chartTooltipRequest = 0;
+    function hideChartTooltip(cancelPending = true) {
+      if (cancelPending) chartTooltipRequest++;
       document.getElementById('chart-tooltip')?.remove();
     }
 
@@ -7253,7 +7255,12 @@
 
     document.addEventListener('click', event => {
       const target = event.target.closest('[data-chart-tip]');
-      if (target) requestAnimationFrame(() => requestAnimationFrame(() => showChartTooltip(target)));
+      if (target) {
+        const request = ++chartTooltipRequest, x = scrollX, y = scrollY;
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          if (request === chartTooltipRequest && x === scrollX && y === scrollY) showChartTooltip(target);
+        }));
+      }
       else hideChartTooltip();
     });
     document.addEventListener('keydown', event => {
@@ -7263,7 +7270,7 @@
         event.target.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       }
     });
-    document.addEventListener('scroll', hideChartTooltip, true);
+    document.addEventListener('scroll', () => hideChartTooltip(false), true);
     let chartResizeTimer;
     let chartWidth = 0;
     let radarMobile = innerWidth < 640;
