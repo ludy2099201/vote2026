@@ -1,0 +1,13 @@
+{
+  "name": "vote2026",
+  "private": true,
+  "scripts": {
+    "validate:data": "node scripts/validate-candidates.js",
+    "build:data": "node scripts/build-inline-data.js",
+    "test:data": "node --test tests/*.test.js"
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
+  }
+}
