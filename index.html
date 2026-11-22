@@ -7314,16 +7314,16 @@
       markup += caption(W/2, H-54, orientation ? '← 社福照顧　｜　建設招商 →' : '議題涵蓋廣度：1 → 6 大領域');
       if (orientation) markup += caption(W/2, H-34, '↓ 直接津貼・現金給付');
       const points = [];
-      const place = (x, y) => {
+      const place = (x, y, r) => {
         let best, distance = Infinity;
-        for (let gy = top + 5; gy <= bottom - 5; gy += 10) {
-          for (let gx = left + 5; gx <= right - 5; gx += 10) {
-            if (points.some(p => Math.hypot(p.x-gx,p.y-gy) < 10)) continue;
+        for (let gy = top + r + 1; gy <= bottom - r - 1; gy += 3) {
+          for (let gx = left + r + 1; gx <= right - r - 1; gx += 3) {
+            if (points.some(p => Math.hypot(p.x-gx,p.y-gy) < p.r+r+1)) continue;
             const d = (gx-x)**2 + (gy-y)**2;
             if (d < distance) { distance = d; best = {x:gx,y:gy}; }
           }
         }
-        points.push(best);
+        points.push({...best,r});
         return best;
       };
       const entries = CANDIDATES.map(c => ({c, user:false}));
@@ -7332,26 +7332,36 @@
       const seeds = entries.map(({c,user}) => {
         const x = orientation ? left + (Math.max(-75,Math.min(75,c.x))+75)/150*(right-left) : left + (c.breadth-1)/5*(right-left);
         const y = orientation ? bottom - (Math.max(-100,Math.min(100,c.y))+100)/200*(bottom-top) : bottom - Math.min(10,c.quantCount)/10*(bottom-top);
-        return {x,y,c,user};
+        const isSelected = c.id === selected.id;
+        const sameCity = !user && c.city === selected.city;
+        const pinned = state.pinnedIds.includes(c.id);
+        const r = isSelected ? 6.5 : user ? 5.5 : sameCity ? 5.5 : pinned ? 5 : 4;
+        return {x,y,c,user,r,isSelected,sameCity,pinned};
       });
-      for (let pass = 0; pass < 60; pass++) {
+      for (let pass = 0; pass < 240; pass++) {
         seeds.forEach((a,i) => seeds.slice(i+1).forEach((b,j) => {
           let dx = b.x-a.x, dy = b.y-a.y;
           let d = Math.hypot(dx,dy);
-          if (d >= 10) return;
+          const separation = a.r+b.r+1.5;
+          if (d >= separation) return;
           if (d < .001) { dx = Math.cos(i+j+1); dy = Math.sin(i+j+1); d = 1; }
-          const move = (10-d)/2;
+          const move = (separation-d)/2;
           a.x -= dx/d*move; a.y -= dy/d*move;
           b.x += dx/d*move; b.y += dy/d*move;
         }));
         seeds.forEach(p => {
-          p.x = Math.max(left+5,Math.min(right-5,p.x));
-          p.y = Math.max(top+5,Math.min(bottom-5,p.y));
+          p.x = Math.max(left+p.r+1,Math.min(right-p.r-1,p.x));
+          p.y = Math.max(top+p.r+1,Math.min(bottom-p.r-1,p.y));
         });
       }
-      const nodes = seeds.map(({x,y,c,user}) => {
-        const p = place(x,y);
-        return {...p,c,user,visible:user || filtered.some(f=>f.id===c.id)};
+      const unresolved = [];
+      seeds.forEach(n => {
+        if (points.some(p => Math.hypot(p.x-n.x,p.y-n.y) < p.r+n.r+1)) unresolved.push(n);
+        else points.push(n);
+      });
+      unresolved.forEach(n => Object.assign(n,place(n.x,n.y,n.r)));
+      const nodes = seeds.map(n => {
+        return {...n,visible:n.user || filtered.some(f=>f.id===n.c.id)};
       });
       const labels = [];
       const intersects = (a,b) => a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
@@ -7359,13 +7369,14 @@
       const labelMarkup = new Map();
       [...nodes].sort((a,b)=>priority(b)-priority(a)).forEach(n => {
         if (!n.visible) return;
-        const text = n.user ? n.c.name : getDisplayName(n.c), w = [...text].length*11+4, h = 14;
-        const positions = [[-w/2,-h-7],[-w/2,7],[7,-h/2],[-w-7,-h/2],[7,-h-7],[-w-7,-h-7],[7,7],[-w-7,7]];
+        const text = n.user ? n.c.name : getDisplayName(n.c), w = [...text].length*11+8, h = 18;
+        const gap = n.r+3;
+        const positions = [[-w/2,-h-gap],[-w/2,gap],[gap,-h/2],[-w-gap,-h/2],[gap,-h-gap],[-w-gap,-h-gap],[gap,gap],[-w-gap,gap]];
         for (const [dx,dy] of positions) {
           const b = {x:n.x+dx,y:n.y+dy,w,h};
-          if (b.x<2 || b.x+w>W-2 || b.y<top || b.y+h>bottom || labels.some(l=>intersects(b,l)) || nodes.some(p=>intersects(b,{x:p.x-5,y:p.y-5,w:10,h:10}))) continue;
+          if (b.x<2 || b.x+w>W-2 || b.y<top || b.y+h>bottom || labels.some(l=>intersects(b,l)) || nodes.some(p=>intersects(b,{x:p.x-p.r-1,y:p.y-p.r-1,w:2*p.r+2,h:2*p.r+2}))) continue;
           labels.push(b);
-          labelMarkup.set(n.c.id, `<text x="${b.x+2}" y="${b.y+11}" font-size="11" fill="#0f172a">${escapeHtml(text)}</text>`);
+          labelMarkup.set(n.c.id, `<text x="${b.x+4}" y="${b.y+13}" font-size="11" font-weight="${n.isSelected || n.sameCity ? '700' : '500'}" fill="#0f172a" stroke="#FFFFFF" stroke-width="2.5" paint-order="stroke">${escapeHtml(text)}</text>`);
           break;
         }
       });
@@ -7375,7 +7386,8 @@
       }
       markup += nodes.map(n => {
         const tip = n.user ? `${n.c.name} (${n.c.x}, ${n.c.y})` : `${getDisplayName(n.c)} · ${getDisplayParty(n.c)} · ${n.c.city} 縣市長 · (${n.c.x}, ${n.c.y})`;
-        return `<g class="spectrum-node" opacity="${n.visible?1:0.16}" ${chartTipAttributes(tip)} onclick="${n.user ? "switchMainTab('quiz')" : `selectSpectrumCandidate('${n.c.id}')`}"><circle class="chart-pin" cx="${n.x}" cy="${n.y}" r="4" fill="${getPartyColorHex(n.c.party)}"/>${labelMarkup.get(n.c.id)||''}<circle class="chart-hit" cx="${n.x}" cy="${n.y}" r="11"/></g>`;
+        const color = getPartyColorHex(n.c.party);
+        return `<g class="spectrum-node" opacity="${n.visible?1:0.16}" ${chartTipAttributes(tip)} onclick="${n.user ? "switchMainTab('quiz')" : `selectSpectrumCandidate('${n.c.id}')`}">${n.isSelected ? `<circle class="chart-halo" cx="${n.x}" cy="${n.y}" r="10" fill="${color}" opacity="0.22"/>` : ''}<circle class="chart-pin" cx="${n.x}" cy="${n.y}" r="${n.r}" fill="${color}" stroke="${n.isSelected ? '#0F172A' : n.sameCity ? '#1E3A8A' : '#FFFFFF'}" stroke-width="${n.isSelected ? 2 : n.sameCity || n.pinned ? 1.5 : 1}"/>${labelMarkup.get(n.c.id)||''}<title>${escapeHtml(tip)}</title><circle class="chart-hit" cx="${n.x}" cy="${n.y}" r="11"/></g>`;
       }).join('');
       svg.innerHTML = markup;
     }
@@ -7401,10 +7413,7 @@
       chartWidth = svg.parentElement.clientWidth;
       if (chartWidth < 560) {
         renderNarrowSpectrum(svg, chartWidth, filtered, selectedCand);
-        document.getElementById('quadrant-summary-cards').innerHTML = '';
-        renderSpectrumInspector(selectedCand);
-        return;
-      }
+      } else {
       svg.setAttribute('viewBox', '0 0 760 540');
 
       const W = 760, H = 540;
@@ -7557,6 +7566,7 @@
         `;
       }
       svg.innerHTML = gridMarkup + rivalLinesMarkup + nodesMarkup + userNodeMarkup;
+      }
 
       // Render Quadrant Summary Cards below plot
       const qCards = document.getElementById('quadrant-summary-cards');

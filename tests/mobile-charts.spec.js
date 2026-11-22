@@ -46,6 +46,18 @@ for (const width of [320,375,414,480]) {
       const scatter = page.locator('#spectrum-svg');
       for (const mode of ['orientation','density']) {
         await page.locator(`#btn-spec-mode-${mode}`).click();
+        const cards = page.locator('#quadrant-summary-cards');
+        if (mode === 'orientation') {
+          await expect(cards).toBeVisible();
+          await expect(cards).toContainText('12 人');
+          await expect(cards).toContainText('47 人');
+          await expect(cards).toContainText('17 人');
+          await expect(cards).toContainText('5 人');
+          await expect(scatter.locator('.chart-halo')).toHaveCount(1);
+          expect(await scatter.locator('.chart-pin[r="6.5"]').count()).toBe(1);
+          await expect(scatter.locator('.spectrum-node title')).toHaveCount(81);
+          expect(await scatter.locator('.chart-pin').evaluateAll(pins => pins.filter(p => Math.abs(p.cx.baseVal.value-Math.round(p.cx.baseVal.value)) > .01).length)).toBeGreaterThan(40);
+        } else await expect(cards).toBeHidden();
         const g = await chartGeometry(scatter,true);
         expect(g.outsideSVG).toBe(0);
         expect(g.outsideViewport).toBe(0);
