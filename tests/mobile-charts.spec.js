@@ -61,6 +61,18 @@ async function tapOccludedMarker(page, svg, overlapRegion = false) {
   if (marker.id) expect(await page.evaluate(()=>state.selectedCandidateId)).toBe(marker.id);
 }
 
+async function expectDensityTooltip(page) {
+  const expected = await page.evaluate(()=>{
+    const c = CANDIDATES[CANDIDATES.length-1];
+    return `涵蓋 ${c.breadth}/6 領域 · 量化 ${c.quantCount} 項`;
+  });
+  await page.locator('#spectrum-svg .spectrum-node').last().focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#chart-tooltip')).toContainText(expected);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#chart-tooltip')).toHaveCount(0);
+}
+
 for (const width of [320,375,414,480]) {
   test.describe(`${width}px touch`, () => {
     test.use({viewport:{width,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});
@@ -82,7 +94,10 @@ for (const width of [320,375,414,480]) {
           expect(await scatter.locator('.chart-pin[r="6.5"]').count()).toBe(1);
           await expect(scatter.locator('.spectrum-node title')).toHaveCount(81);
           expect(await scatter.locator('.chart-pin').evaluateAll(pins => pins.filter(p => Math.abs(p.cx.baseVal.value-Math.round(p.cx.baseVal.value)) > .01).length)).toBeGreaterThan(40);
-        } else await expect(cards).toBeHidden();
+        } else {
+          await expect(cards).toBeHidden();
+          await expectDensityTooltip(page);
+        }
         const g = await chartGeometry(scatter,true);
         expect(g.outsideSVG).toBe(0);
         expect(g.outsideViewport).toBe(0);
@@ -141,6 +156,8 @@ test('desktop retains 81 candidate pins', async ({page}) => {
   await page.goto('/#spectrum');
   await expect(page.locator('#spectrum-svg .spectrum-node')).toHaveCount(81);
   await expect(page.locator('#spectrum-svg')).toHaveAttribute('viewBox','0 0 760 540');
+  await page.locator('#btn-spec-mode-density').click();
+  await expectDensityTooltip(page);
 });
 
 test('empty spectrum filter clears the chart without errors', async ({page}) => {

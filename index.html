@@ -7316,6 +7316,10 @@
       return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
 
+    function spectrumCoordinateText(c) {
+      return state.spectrumMode === 'density' ? `涵蓋 ${c.breadth}/6 領域 · 量化 ${c.quantCount} 項` : `(${c.x}, ${c.y})`;
+    }
+
     function renderNarrowSpectrum(svg, width, filtered, selected) {
       const W = Math.floor(width), H = Math.round(W * 1.3);
       const left = 15, right = W - 15, top = 92, bottom = H - 80;
@@ -7404,7 +7408,7 @@
         markup += nodes.filter(n => !n.user && n.visible && n.c.city === selected.city && n !== origin).map(n => `<path d="M${origin.x} ${origin.y}L${n.x} ${n.y}" stroke="#1D4ED8" stroke-dasharray="4 3" opacity="0.5"/>`).join('');
       }
       markup += nodes.map(n => {
-        const tip = n.user ? `${n.c.name} (${n.c.x}, ${n.c.y})` : `${getDisplayName(n.c)} · ${getDisplayParty(n.c)} · ${n.c.city} 縣市長 · (${n.c.x}, ${n.c.y})`;
+        const tip = n.user ? `${n.c.name} (${n.c.x}, ${n.c.y})` : `${getDisplayName(n.c)} · ${getDisplayParty(n.c)} · ${n.c.city} 縣市長 · ${spectrumCoordinateText(n.c)}`;
         const color = getPartyColorHex(n.c.party);
         return `<g class="spectrum-node" opacity="${n.visible?1:0.16}" ${chartTipAttributes(tip)} onclick="${n.user ? "switchMainTab('quiz')" : `selectSpectrumCandidate('${n.c.id}')`}">${n.isSelected ? `<circle class="chart-halo" cx="${n.x}" cy="${n.y}" r="10" fill="${color}" opacity="0.22"/>` : ''}<circle class="chart-pin" cx="${n.x}" cy="${n.y}" r="${n.r}" fill="${color}" stroke="${n.isSelected ? '#0F172A' : n.sameCity ? '#1E3A8A' : '#FFFFFF'}" stroke-width="${n.isSelected ? 2 : n.sameCity || n.pinned ? 1.5 : 1}"/>${labelMarkup.get(n.c.id)||''}<title>${escapeHtml(tip)}</title><circle class="chart-hit" cx="${n.x}" cy="${n.y}" r="11"/></g>`;
       }).join('');
@@ -7558,13 +7562,13 @@
         const labelText = state.blindMode ? `${c.city} ${getDisplayName(c)}` : `${c.city.slice(0,2)}·${c.name.slice(0,4)}`;
 
         return `
-          <g class="spectrum-node" opacity="${opacity}" ${chartTipAttributes(`${getDisplayName(c)} · ${getDisplayParty(c)} · ${c.city} 縣市長 · (${c.x}, ${c.y})`)} onclick="selectSpectrumCandidate('${c.id}')">
+          <g class="spectrum-node" opacity="${opacity}" ${chartTipAttributes(`${getDisplayName(c)} · ${getDisplayParty(c)} · ${c.city} 縣市長 · ${spectrumCoordinateText(c)}`)} onclick="selectSpectrumCandidate('${c.id}')">
             ${isSelected ? `<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="15" fill="${color}" opacity="0.22"/>` : ''}
             <circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="${r}" fill="${color}" stroke="${stroke}" stroke-width="${strokeW}"/>
             ${showLabel && isFilteredIn ? `
               <text x="${pt.x.toFixed(1)}" y="${(pt.y - r - 4).toFixed(1)}" text-anchor="middle" font-size="${isSelected ? '11.5' : '10'}" font-weight="${isSelected || isSameCity ? '700' : '500'}" fill="${isSelected ? '#0F172A' : '#334155'}" stroke="#FFFFFF" stroke-width="2.5" paint-order="stroke">${labelText}</text>
             ` : ''}
-            <title>${c.city} ${getDisplayNum(c)} ${getDisplayName(c)} (${getDisplayParty(c)}) — 點擊檢視政見來源</title>
+            <title>${c.city} ${getDisplayNum(c)} ${getDisplayName(c)} (${getDisplayParty(c)}) · ${spectrumCoordinateText(c)} — 點擊檢視政見來源</title>
             <circle class="chart-hit" cx="${pt.x}" cy="${pt.y}" r="${11 * 760 / chartWidth}"/>
           </g>
         `;
