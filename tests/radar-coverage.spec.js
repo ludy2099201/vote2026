@@ -1,0 +1,45 @@
+const { test, expect } = require('@playwright/test');
+
+test('candidate radar labels describe policy coverage, not stance scores', async ({ page }) => {
+  await page.goto('/#compare');
+  await expect(page.getByRole('heading', { name: '已釘選候選人：政見涵蓋度', exact: true })).toBeVisible();
+  const legend = page.locator('#compare-radar-legend');
+  await expect(legend).toHaveAttribute('aria-label', '政見涵蓋度圖例');
+  await expect(legend).toContainText('政見涵蓋度');
+  await expect(page.getByText('政見涵蓋度：有政見摘要／尚未確認。各議題請見下方並排對照。', { exact: true })).toBeVisible();
+  await page.evaluate(() => switchMainTab('spectrum'));
+  await expect(page.locator('#spectrum-inspector-panel')).toContainText('政見涵蓋度');
+  const labels = await page.evaluate(() => {
+    const read = candidate => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.innerHTML = buildHexagonRadarSVG([candidate], false);
+      return {
+        title: svg.querySelector('title')?.textContent,
+        tips: [...svg.querySelectorAll('[data-chart-tip]')].map(node => ({
+          tip: node.dataset.chartTip, aria: node.getAttribute('aria-label')
+        }))
+      };
+    };
+    return {
+      covered: read(CANDIDATES.find(c => c.radar.includes(100))),
+      unconfirmed: read(CANDIDATES.find(c => c.radar.includes(0))),
+      user: read({ radar: [0, 20, 40, 60, 80, 100], party: 'other' })
+    };
+  });
+  for (const candidate of [labels.covered, labels.unconfirmed]) {
+    expect(candidate.title).toBe('政見涵蓋度：有政見摘要／尚未確認');
+    expect(candidate.tips).toHaveLength(6);
+    for (const { tip, aria } of candidate.tips) {
+      expect(tip).toMatch(/^政見涵蓋度 · .+：(有政見摘要|尚未確認)$/);
+      expect(aria).toBe(tip);
+      expect(tip).not.toMatch(/分數|強度|\/ 100/);
+    }
+  }
+  expect(labels.covered.tips.some(({ tip }) => tip.endsWith('有政見摘要'))).toBe(true);
+  expect(labels.unconfirmed.tips.some(({ tip }) => tip.endsWith('尚未確認'))).toBe(true);
+  expect(labels.user.title).toBeUndefined();
+  expect(labels.user.tips.map(({ tip }) => tip)).toEqual([
+    '育兒教育：0 / 100', '高齡長照：20 / 100', '軌道交通：40 / 100',
+    '居住都更：60 / 100', '科技產業：80 / 100', '生態治理：100 / 100'
+  ]);
+});

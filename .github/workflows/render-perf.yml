@@ -1,0 +1,30 @@
+name: Render performance
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  render-perf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test tests/render-perf.spec.js --project=desktop
+      - name: Measure before and after
+        continue-on-error: true
+        run: |
+          git branch main origin/main 2>/dev/null || true
+          npm run perf | tee render-perf.md
+          cat render-perf.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: render-perf
+          path: render-perf.md
