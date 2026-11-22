@@ -15,6 +15,8 @@ test('blind identities stay masked across views, tooltips, modal and exports', a
   const original = await page.evaluate(() => JSON.stringify(CANDIDATES));
   const identities = await page.evaluate(() => [...new Set(CANDIDATES.flatMap(c => [c.name, c.party]))]);
   await page.locator('#btn-blind-toggle').click();
+  const partyOptions = await page.locator('#party-filter-select').textContent();
+  expect(identities.filter(identity => partyOptions.includes(identity))).toEqual([]);
   for (const tab of ['matrix', 'spectrum', 'compare', 'sources', 'quiz']) {
     await page.evaluate(tab => switchMainTab(tab), tab);
     await expectNoIdentities(page, identities);
@@ -22,9 +24,12 @@ test('blind identities stay masked across views, tooltips, modal and exports', a
   await page.evaluate(() => {
     state.quizAnswers = Object.fromEntries(QUIZ_QUESTIONS.map((q, i) => [i, q.options.find(o => o.radar).code]));
     computeQuizProfile();
-    renderQuizView();
+    enterQuiz();
   });
   await expectNoIdentities(page, identities);
+  const duelText = await page.evaluate(() => CANDIDATES.flatMap(candidate =>
+    Object.keys(ISSUE_META).map(key => renderDuelCard(candidate, key) + renderDuelReview(candidate, key))).join('\n'));
+  expect(identities.filter(identity => duelText.includes(identity)), 'duel identity leaks').toEqual([]);
   await page.evaluate(() => openCandidateModal(CANDIDATES.find(c => c.party === '司法改革黨').id));
   await expectNoIdentities(page, identities);
   await page.evaluate(() => closeCandidateModal());
