@@ -6767,6 +6767,13 @@
 
     function toggleBlindMode() {
       state.blindMode = !state.blindMode;
+      hideChartTooltip();
+      if (state.blindMode) {
+        document.querySelectorAll('[data-chart-tip]').forEach(target => {
+          target.dataset.chartTip = policyDisplayText(target.dataset.chartTip);
+          target.setAttribute('aria-label', policyDisplayText(target.getAttribute('aria-label')));
+        });
+      }
       closeCandidateModal();
       if (state.blindMode) {
         state.partyFilter = 'all';
@@ -7253,7 +7260,7 @@
       const tip = document.createElement('div');
       tip.id = 'chart-tooltip';
       tip.setAttribute('role', 'tooltip');
-      tip.textContent = target.dataset.chartTip;
+      tip.textContent = policyDisplayText(target.dataset.chartTip);
       document.body.appendChild(tip);
       const current = [...document.querySelectorAll('[data-chart-tip]')].find(node => node.dataset.chartTip === target.dataset.chartTip) || target;
       const rect = current.getBoundingClientRect();
@@ -7318,6 +7325,7 @@
     window.addEventListener('orientationchange', resizePolicyCharts);
 
     function chartTipAttributes(text) {
+      text = policyDisplayText(text);
       return `tabindex="0" role="button" data-chart-tip="${escapeHtml(text)}" aria-label="${escapeHtml(text)}"`;
     }
 
