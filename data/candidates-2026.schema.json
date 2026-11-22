@@ -1,0 +1,281 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "cityOrder",
+    "cityBulletinUrls",
+    "issueMeta",
+    "candidates"
+  ],
+  "properties": {
+    "cityOrder": {
+      "type": "array",
+      "minItems": 22,
+      "maxItems": 22,
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "cityBulletinUrls": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^.+$": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://bulletin\\.cec\\.gov\\.tw/"
+        }
+      }
+    },
+    "issueMeta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "childcare",
+        "senior",
+        "transit",
+        "housing",
+        "industry",
+        "governance"
+      ],
+      "properties": {
+        "childcare": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "label",
+            "short",
+            "desc"
+          ],
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "short": {
+              "type": "string"
+            },
+            "desc": {
+              "type": "string"
+            }
+          }
+        },
+        "senior": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "label",
+            "short",
+            "desc"
+          ],
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "short": {
+              "type": "string"
+            },
+            "desc": {
+              "type": "string"
+            }
+          }
+        },
+        "transit": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "label",
+            "short",
+            "desc"
+          ],
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "short": {
+              "type": "string"
+            },
+            "desc": {
+              "type": "string"
+            }
+          }
+        },
+        "housing": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "label",
+            "short",
+            "desc"
+          ],
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "short": {
+              "type": "string"
+            },
+            "desc": {
+              "type": "string"
+            }
+          }
+        },
+        "industry": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "label",
+            "short",
+            "desc"
+          ],
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "short": {
+              "type": "string"
+            },
+            "desc": {
+              "type": "string"
+            }
+          }
+        },
+        "governance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "label",
+            "short",
+            "desc"
+          ],
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "short": {
+              "type": "string"
+            },
+            "desc": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "city",
+          "num",
+          "name",
+          "party",
+          "incumbent",
+          "bulletinType",
+          "slogan",
+          "highlights",
+          "issues",
+          "radar",
+          "x",
+          "y",
+          "quantCount"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}-\\d+$"
+          },
+          "city": {
+            "type": "string"
+          },
+          "num": {
+            "type": "string",
+            "pattern": "^\\d+號$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "party": {
+            "type": "string"
+          },
+          "incumbent": {
+            "type": "boolean"
+          },
+          "bulletinType": {
+            "type": "string"
+          },
+          "slogan": {
+            "type": "string"
+          },
+          "highlights": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "issues": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "childcare",
+              "senior",
+              "transit",
+              "housing",
+              "industry",
+              "governance"
+            ],
+            "properties": {
+              "childcare": {
+                "type": "string"
+              },
+              "senior": {
+                "type": "string"
+              },
+              "transit": {
+                "type": "string"
+              },
+              "housing": {
+                "type": "string"
+              },
+              "industry": {
+                "type": "string"
+              },
+              "governance": {
+                "type": "string"
+              }
+            }
+          },
+          "radar": {
+            "type": "array",
+            "minItems": 6,
+            "maxItems": 6,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            }
+          },
+          "x": {
+            "type": "number",
+            "minimum": -75,
+            "maximum": 75
+          },
+          "y": {
+            "type": "number",
+            "minimum": -100,
+            "maximum": 100
+          },
+          "quantCount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    }
+  }
+}
