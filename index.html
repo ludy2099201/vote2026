@@ -2084,11 +2084,11 @@
       <!-- Overlaid Radar + Mini Spectrum for Pinned Candidates -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
         <div class="lg:col-span-5 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-          <h3 class="text-sm font-bold text-slate-900 mb-2">已釘選候選人：政見查證狀態</h3>
+          <h3 class="text-sm font-bold text-slate-900 mb-2">已釘選候選人：政見涵蓋度</h3>
           <div class="flex justify-center items-center bg-slate-50 rounded-lg border border-slate-100 p-3">
-            <p>各議題的資料狀態請見下方並排對照。</p>
+            <p>政見涵蓋度：有政見摘要／尚未確認。各議題請見下方並排對照。</p>
           </div>
-          <div id="compare-radar-legend" class="mt-3 flex flex-wrap gap-2 text-xs"></div>
+          <div id="compare-radar-legend" aria-label="政見涵蓋度圖例" class="mt-3 flex flex-wrap gap-2 text-xs"></div>
         </div>
 
         <div class="lg:col-span-7 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
@@ -6562,7 +6562,9 @@
       }
     });
 
-    // Compute breadth (how many of the 6 issues have substantive policy text > 18 chars)
+    // Coverage is 100 for a non-empty summary without a placeholder (e.g. 本次摘要尚未確認 / 未單獨列出), else 0.
+    // Breadth counts non-zero axes. Stored six-axis scores from data/candidates-2026.json are overwritten and unused;
+    // nearestPolicy matches X/Y only.
     CANDIDATES.forEach(c => {
       if (REVIEWED_POLICY_CORRECTIONS[c.id]) Object.assign(c, REVIEWED_POLICY_CORRECTIONS[c.id]);
       c.bulletinType = REVIEWED_POLICY_CORRECTIONS[c.id] ? '已有查證摘要' : '政見整理，待核對';
@@ -7642,6 +7644,7 @@
     }
 
     function buildHexagonRadarSVG(candList, showNationalAvg = true) {
+      const candidateCoverage = candList.some(c => c.id);
       const mobile = innerWidth < 640;
       const cx = 180, cy = 148, maxR = mobile ? 82 : 98;
       const labels = ['育兒教育', '高齡長照', '軌道交通', '居住都更', '科技產業', '生態治理'];
@@ -7689,7 +7692,8 @@
       const vertices = candList.length === 1 && !showNationalAvg ? candList[0].radar.map((score,i) => {
         const r = Math.max(0,Math.min(100,score))/100*maxR;
         const x = cx+r*Math.cos(angles[i]), y = cy+r*Math.sin(angles[i]);
-        return `<g class="radar-vertex" ${chartTipAttributes(`${labels[i]}：${score} / 100`)}><circle cx="${x}" cy="${y}" r="3" fill="#D97706"/><circle class="chart-hit" cx="${x}" cy="${y}" r="${mobile ? 21 : 13}"/></g>`;
+        const label = candidateCoverage ? `政見涵蓋度 · ${labels[i]}：${score ? '有政見摘要' : '尚未確認'}` : `${labels[i]}：${score} / 100`;
+        return `<g class="radar-vertex" ${chartTipAttributes(label)}><circle cx="${x}" cy="${y}" r="3" fill="#D97706"/><circle class="chart-hit" cx="${x}" cy="${y}" r="${mobile ? 21 : 13}"/></g>`;
       }).join('') : '';
       if (mobile) requestAnimationFrame(() => {
         const svg = document.querySelector('.quiz-radar');
@@ -7697,7 +7701,7 @@
         const box = svg.getBBox();
         svg.setAttribute('viewBox', `${box.x-10} ${box.y-10} ${box.width+20} ${box.height+20}`);
       });
-      return rings + spokes + avgPoly + candPolys + vertices;
+      return (candidateCoverage ? '<title>政見涵蓋度：有政見摘要／尚未確認</title>' : '') + rings + spokes + avgPoly + candPolys + vertices;
     }
 
     function renderSpectrumInspector(c) {
@@ -7737,10 +7741,10 @@
         <!-- 6-Axis Radar SVG -->
         <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
           <div class="flex items-center justify-between text-xs mb-1">
-            <span class="font-bold text-slate-800">政見資料狀態</span>
+            <span class="font-bold text-slate-800">政見涵蓋度</span>
             <span class="text-[11px] text-slate-500 font-mono-code"></span>
           </div>
-          <p>各議題的資料狀態請見政見明細。</p>
+          <p>政見涵蓋度：有政見摘要／尚未確認。各議題請見政見明細。</p>
           ${state.spectrumMode === 'orientation' ? `
           <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-200/80 text-xs font-mono-code">
             <div class="bg-white p-2 rounded border border-slate-200">
@@ -7820,7 +7824,7 @@
         radarLegend.innerHTML = pinnedCands.map((c, idx) => `
           <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 font-semibold text-slate-800">
             <span class="w-3 h-3 rounded-full inline-block" style="background:${palette[idx % palette.length]}"></span>
-            <span>${c.city} ${getDisplayName(c)}</span>
+            <span>${c.city} ${getDisplayName(c)} · 政見涵蓋度</span>
           </span>
         `).join('');
       }
