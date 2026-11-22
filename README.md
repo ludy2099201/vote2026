@@ -17,5 +17,6 @@ The validator also checks city/URL consistency, identifiers, ballot numbers,
 and policy-axis order. Optional `npm run validate:data -- --online` checks the
 bulletin URLs with HEAD requests; it is not part of CI.
 
-The durable equivalence test compares the initial data and untouched HTML against
-Git commit `777a00f`; a full Git checkout is needed to run it.
+The durable equivalence test compares current data against Git commit `777a00f`
+and checks extraction snapshot `a5676be` preserved the remaining HTML bytes;
+a full Git checkout is needed to run it.
