@@ -2072,9 +2072,9 @@
             <button type="button" onclick="loadComparePreset(['PEN-3','PEN-4','PEN-5','KIN-5','LNN-1','LNN-2'])" class="px-2.5 py-1 rounded text-xs font-semibold bg-slate-100 text-slate-800 hover:bg-blue-50 hover:text-blue-700">澎金馬離島海空醫療 (6人)</button>
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2" style="min-width:0;max-width:100%">
             <label for="add-compare-select" class="text-xs font-bold text-slate-600 shrink-0">新增候選人：</label>
-            <select id="add-compare-select" onchange="addCandidateToCompare(this.value); this.value='';" class="px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs bg-white text-slate-800">
+            <select id="add-compare-select" onchange="addCandidateToCompare(this.value); this.value='';" class="px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs bg-white text-slate-800" style="min-width:0;flex:1 1 auto;max-width:100%;text-overflow:ellipsis">
               <option value="">＋ 從 81 位候選人中選擇加入...</option>
             </select>
           </div>
