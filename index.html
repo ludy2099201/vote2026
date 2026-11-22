@@ -1763,6 +1763,7 @@
     #chart-tooltip { position: fixed; z-index: 100; max-width: calc(100vw - 16px); padding: 10px 12px; border-radius: 8px; background: #0f172a; color: white; font-size: 13px; pointer-events: none; }
     .chart-hit { fill: transparent; cursor: pointer; }
     .quiz-radar { width: 100%; height: auto; margin: auto; }
+    .coverage-radar { display: block; width: 100%; max-width: 360px; height: auto; margin: 0 auto; }
     html { scroll-behavior: smooth; scroll-padding-top: 115px; }
     button, select, summary, a { -webkit-tap-highlight-color: transparent; }
     button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visible {
@@ -2085,8 +2086,10 @@
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
         <div class="lg:col-span-5 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
           <h3 class="text-sm font-bold text-slate-900 mb-2">已釘選候選人：政見涵蓋度</h3>
-          <div class="flex justify-center items-center bg-slate-50 rounded-lg border border-slate-100 p-3">
-            <p>政見涵蓋度：有政見摘要／尚未確認。各議題請見下方並排對照。</p>
+          <div class="bg-slate-50 rounded-lg border border-slate-100 p-3">
+            <svg id="compare-radar-svg" viewBox="0 0 360 300" class="coverage-radar" role="img" aria-label="已釘選候選人政見涵蓋度雷達圖"></svg>
+            <p class="text-xs text-slate-600">政見涵蓋度：有政見摘要／尚未確認。各議題請見下方並排對照。</p>
+            <p class="text-xs text-slate-500">外圈代表該議題有政見摘要，中心代表尚未確認；多位候選人以略為內縮的圈區分，不代表分數高低。</p>
           </div>
           <div id="compare-radar-legend" aria-label="政見涵蓋度圖例" class="mt-3 flex flex-wrap gap-2 text-xs"></div>
         </div>
@@ -7659,7 +7662,7 @@
         }).join(' ');
       }
 
-      const rings = [25, 50, 75, 100].map(pct => {
+      const rings = (candidateCoverage ? [100] : [25, 50, 75, 100]).map(pct => {
         const pts = angles.map(a => {
           const r = (pct / 100) * maxR;
           return `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`;
@@ -7684,15 +7687,24 @@
       ` : '';
 
       const palette = ['#2563EB', '#0D9488', '#D97706', '#7C3AED', '#DC2626', '#0F172A'];
+      // Coverage is binary per axis; later candidates are drawn slightly inset so overlapping outlines stay distinguishable.
+      const coverageInset = idx => candidateCoverage && candList.length > 1 ? 100 - idx * 7 : 100;
       const candPolys = candList.map((c, idx) => {
         const col = candList.length === 1 ? getPartyColorHex(c.party) : palette[idx % palette.length];
-        return `<polygon points="${toPts(c.radar)}" fill="${col}" fill-opacity="${candList.length === 1 ? '0.24' : '0.12'}" stroke="${col}" stroke-width="2.5"/>`;
+        const values = candidateCoverage ? c.radar.map(v => v ? coverageInset(idx) : 0) : c.radar;
+        return `<polygon points="${toPts(values)}" fill="${col}" fill-opacity="${candList.length === 1 ? '0.24' : '0.12'}" stroke="${col}" stroke-width="2.5"/>`;
       }).join('');
 
       const vertices = candList.length === 1 && !showNationalAvg ? candList[0].radar.map((score,i) => {
+        if (candidateCoverage) {
+          const x = cx+maxR*Math.cos(angles[i]), y = cy+maxR*Math.sin(angles[i]);
+          const col = getPartyColorHex(candList[0].party);
+          const tip = `政見涵蓋度 · ${labels[i]}：${score ? '有政見摘要' : '尚未確認'}`;
+          return `<g class="radar-vertex" ${chartTipAttributes(tip)}><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="${score ? col : '#FFFFFF'}" stroke="${col}" stroke-width="2"/><circle class="chart-hit" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${mobile ? 21 : 13}"/></g>`;
+        }
         const r = Math.max(0,Math.min(100,score))/100*maxR;
         const x = cx+r*Math.cos(angles[i]), y = cy+r*Math.sin(angles[i]);
-        const label = candidateCoverage ? `政見涵蓋度 · ${labels[i]}：${score ? '有政見摘要' : '尚未確認'}` : `${labels[i]}：${score} / 100`;
+        const label = `${labels[i]}：${score} / 100`;
         return `<g class="radar-vertex" ${chartTipAttributes(label)}><circle cx="${x}" cy="${y}" r="3" fill="#D97706"/><circle class="chart-hit" cx="${x}" cy="${y}" r="${mobile ? 21 : 13}"/></g>`;
       }).join('') : '';
       if (mobile) requestAnimationFrame(() => {
@@ -7744,7 +7756,10 @@
             <span class="font-bold text-slate-800">政見涵蓋度</span>
             <span class="text-[11px] text-slate-500 font-mono-code"></span>
           </div>
-          <p>政見涵蓋度：有政見摘要／尚未確認。各議題請見政見明細。</p>
+          <svg viewBox="0 0 360 300" class="coverage-radar" role="img" aria-label="政見涵蓋度雷達圖">
+            ${buildHexagonRadarSVG([c], false)}
+          </svg>
+          <p class="text-xs text-slate-600">政見涵蓋度：有政見摘要／尚未確認。各議題請見政見明細。</p>
           ${state.spectrumMode === 'orientation' ? `
           <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-200/80 text-xs font-mono-code">
             <div class="bg-white p-2 rounded border border-slate-200">
@@ -7824,7 +7839,7 @@
         radarLegend.innerHTML = pinnedCands.map((c, idx) => `
           <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 font-semibold text-slate-800">
             <span class="w-3 h-3 rounded-full inline-block" style="background:${palette[idx % palette.length]}"></span>
-            <span>${c.city} ${getDisplayName(c)} · 政見涵蓋度</span>
+            <span>${c.city} ${getDisplayName(c)} · 政見涵蓋度 ${c.radar.filter(Boolean).length} / 6 項</span>
           </span>
         `).join('');
       }
