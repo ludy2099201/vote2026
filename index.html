@@ -1760,6 +1760,9 @@
       cursor: pointer;
     }
     .spectrum-node:hover { filter: brightness(1.1); }
+    #chart-tooltip { position: fixed; z-index: 100; max-width: calc(100vw - 16px); padding: 10px 12px; border-radius: 8px; background: #0f172a; color: white; font-size: 13px; pointer-events: none; }
+    .chart-hit { fill: transparent; cursor: pointer; }
+    .quiz-radar { width: 100%; height: auto; margin: auto; }
     html { scroll-behavior: smooth; scroll-padding-top: 115px; }
     button, select, summary, a { -webkit-tap-highlight-color: transparent; }
     button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visible {
@@ -7230,6 +7233,146 @@
     // ============================================================================
     // 8. RENDERING: VIEW 2 — 2D POLICY SPECTRUM & 6-AXIS RADAR
     // ============================================================================
+    function hideChartTooltip() {
+      document.getElementById('chart-tooltip')?.remove();
+    }
+
+    function showChartTooltip(target) {
+      hideChartTooltip();
+      const tip = document.createElement('div');
+      tip.id = 'chart-tooltip';
+      tip.setAttribute('role', 'tooltip');
+      tip.textContent = target.dataset.chartTip;
+      document.body.appendChild(tip);
+      const current = [...document.querySelectorAll('[data-chart-tip]')].find(node => node.dataset.chartTip === target.dataset.chartTip) || target;
+      const rect = current.getBoundingClientRect();
+      const box = tip.getBoundingClientRect();
+      tip.style.left = Math.max(8, Math.min(innerWidth - box.width - 8, rect.left)) + 'px';
+      tip.style.top = Math.max(8, Math.min(innerHeight - box.height - 8, rect.bottom + 8)) + 'px';
+    }
+
+    document.addEventListener('click', event => {
+      const target = event.target.closest('[data-chart-tip]');
+      if (target) requestAnimationFrame(() => requestAnimationFrame(() => showChartTooltip(target)));
+      else hideChartTooltip();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') hideChartTooltip();
+      if (event.key === 'Enter' && event.target.matches('[data-chart-tip]')) {
+        event.preventDefault();
+        event.target.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      }
+    });
+    document.addEventListener('scroll', hideChartTooltip, true);
+    let chartResizeTimer;
+    let chartWidth = 0;
+    let radarMobile = innerWidth < 640;
+    function resizePolicyCharts() {
+      clearTimeout(chartResizeTimer);
+      chartResizeTimer = setTimeout(() => {
+        const svg = document.getElementById('spectrum-svg');
+        const width = svg?.parentElement.clientWidth || 0;
+        if (state.activeTab === 'spectrum' && Math.abs(width - chartWidth) > 2) renderSpectrumView();
+        if (radarMobile !== (innerWidth < 640)) {
+          radarMobile = innerWidth < 640;
+          if (state.activeTab === 'quiz') renderQuizView();
+        }
+      }, 120);
+    }
+    window.addEventListener('resize', resizePolicyCharts);
+    window.addEventListener('orientationchange', resizePolicyCharts);
+
+    function chartTipAttributes(text) {
+      return `tabindex="0" role="button" data-chart-tip="${escapeHtml(text)}" aria-label="${escapeHtml(text)}"`;
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function renderNarrowSpectrum(svg, width, filtered, selected) {
+      const W = Math.floor(width), H = Math.round(W * 1.3);
+      const left = 15, right = W - 15, top = 92, bottom = H - 80;
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      const orientation = state.spectrumMode === 'orientation';
+      const caption = (x, y, text, anchor = 'middle') => `<text class="chart-caption" x="${x}" y="${y}" text-anchor="${anchor}" font-size="10" fill="#334155">${text}</text>`;
+      let markup = `<rect x="${left}" y="${top}" width="${right-left}" height="${bottom-top}" fill="#f0fdfa"/>`;
+      if (orientation) {
+        const midX = (left+right)/2, midY = (top+bottom)/2;
+        markup += `<rect x="${midX}" y="${top}" width="${(right-left)/2}" height="${(bottom-top)/2}" fill="#eff6ff"/><rect x="${left}" y="${midY}" width="${(right-left)/2}" height="${(bottom-top)/2}" fill="#fefce8"/><rect x="${midX}" y="${midY}" width="${(right-left)/2}" height="${(bottom-top)/2}" fill="#f1f5f9"/><path d="M${left} ${midY}H${right} M${midX} ${top}V${bottom}" stroke="#94a3b8"/>`;
+      }
+      markup += caption(W/2, 16, orientation ? '↑ 制度・科技治理' : '↑ 量化指標（最多 10 項）');
+      markup += caption(W/2, 34, orientation ? '左上：制度型社福' : '政見議題涵蓋與量化條目');
+      if (orientation) markup += caption(W/2, 50, '右上：科技治理・基建') + caption(W/2, 66, '左下：津貼減免') + caption(W/2, 82, '右下：工程・產業補助');
+      markup += caption(W/2, H-54, orientation ? '← 社福照顧　｜　建設招商 →' : '議題涵蓋廣度：1 → 6 大領域');
+      if (orientation) markup += caption(W/2, H-34, '↓ 直接津貼・現金給付');
+      const points = [];
+      const place = (x, y) => {
+        let best, distance = Infinity;
+        for (let gy = top + 5; gy <= bottom - 5; gy += 10) {
+          for (let gx = left + 5; gx <= right - 5; gx += 10) {
+            if (points.some(p => Math.hypot(p.x-gx,p.y-gy) < 10)) continue;
+            const d = (gx-x)**2 + (gy-y)**2;
+            if (d < distance) { distance = d; best = {x:gx,y:gy}; }
+          }
+        }
+        points.push(best);
+        return best;
+      };
+      const entries = CANDIDATES.map(c => ({c, user:false}));
+      const profile = state.userSpectrumProfile;
+      if (orientation && profile?.answeredCount === QUIZ_QUESTIONS.length && profile.choices.length) entries.push({c:{...profile,id:'quiz-user',name:'您的測驗座標',city:'',party:'other'},user:true});
+      const seeds = entries.map(({c,user}) => {
+        const x = orientation ? left + (Math.max(-75,Math.min(75,c.x))+75)/150*(right-left) : left + (c.breadth-1)/5*(right-left);
+        const y = orientation ? bottom - (Math.max(-100,Math.min(100,c.y))+100)/200*(bottom-top) : bottom - Math.min(10,c.quantCount)/10*(bottom-top);
+        return {x,y,c,user};
+      });
+      for (let pass = 0; pass < 60; pass++) {
+        seeds.forEach((a,i) => seeds.slice(i+1).forEach((b,j) => {
+          let dx = b.x-a.x, dy = b.y-a.y;
+          let d = Math.hypot(dx,dy);
+          if (d >= 10) return;
+          if (d < .001) { dx = Math.cos(i+j+1); dy = Math.sin(i+j+1); d = 1; }
+          const move = (10-d)/2;
+          a.x -= dx/d*move; a.y -= dy/d*move;
+          b.x += dx/d*move; b.y += dy/d*move;
+        }));
+        seeds.forEach(p => {
+          p.x = Math.max(left+5,Math.min(right-5,p.x));
+          p.y = Math.max(top+5,Math.min(bottom-5,p.y));
+        });
+      }
+      const nodes = seeds.map(({x,y,c,user}) => {
+        const p = place(x,y);
+        return {...p,c,user,visible:user || filtered.some(f=>f.id===c.id)};
+      });
+      const labels = [];
+      const intersects = (a,b) => a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
+      const priority = n => n.c.id===selected.id ? 4 : n.user ? 3.5 : state.pinnedIds.includes(n.c.id) ? 3 : n.c.city===selected.city ? 2 : 1;
+      const labelMarkup = new Map();
+      [...nodes].sort((a,b)=>priority(b)-priority(a)).forEach(n => {
+        if (!n.visible) return;
+        const text = n.user ? n.c.name : getDisplayName(n.c), w = [...text].length*11+4, h = 14;
+        const positions = [[-w/2,-h-7],[-w/2,7],[7,-h/2],[-w-7,-h/2],[7,-h-7],[-w-7,-h-7],[7,7],[-w-7,7]];
+        for (const [dx,dy] of positions) {
+          const b = {x:n.x+dx,y:n.y+dy,w,h};
+          if (b.x<2 || b.x+w>W-2 || b.y<top || b.y+h>bottom || labels.some(l=>intersects(b,l)) || nodes.some(p=>intersects(b,{x:p.x-5,y:p.y-5,w:10,h:10}))) continue;
+          labels.push(b);
+          labelMarkup.set(n.c.id, `<text x="${b.x+2}" y="${b.y+11}" font-size="11" fill="#0f172a">${escapeHtml(text)}</text>`);
+          break;
+        }
+      });
+      if (state.connectRivals) {
+        const origin = nodes.find(n => n.c.id === selected.id);
+        markup += nodes.filter(n => !n.user && n.visible && n.c.city === selected.city && n !== origin).map(n => `<path d="M${origin.x} ${origin.y}L${n.x} ${n.y}" stroke="#1D4ED8" stroke-dasharray="4 3" opacity="0.5"/>`).join('');
+      }
+      markup += nodes.map(n => {
+        const tip = n.user ? `${n.c.name} (${n.c.x}, ${n.c.y})` : `${getDisplayName(n.c)} · ${getDisplayParty(n.c)} · ${n.c.city} 縣市長 · (${n.c.x}, ${n.c.y})`;
+        return `<g class="spectrum-node" opacity="${n.visible?1:0.16}" ${chartTipAttributes(tip)} onclick="${n.user ? "switchMainTab('quiz')" : `selectSpectrumCandidate('${n.c.id}')`}"><circle class="chart-pin" cx="${n.x}" cy="${n.y}" r="4" fill="${getPartyColorHex(n.c.party)}"/>${labelMarkup.get(n.c.id)||''}<circle class="chart-hit" cx="${n.x}" cy="${n.y}" r="11"/></g>`;
+      }).join('');
+      svg.innerHTML = markup;
+    }
+
     function renderSpectrumView() {
       const filtered = getFilteredCandidates();
       const svg = document.getElementById('spectrum-svg');
@@ -7247,6 +7390,15 @@
         document.getElementById("quadrant-summary-cards").innerHTML = "";
         return;
       }
+
+      chartWidth = svg.parentElement.clientWidth;
+      if (chartWidth < 560) {
+        renderNarrowSpectrum(svg, chartWidth, filtered, selectedCand);
+        document.getElementById('quadrant-summary-cards').innerHTML = '';
+        renderSpectrumInspector(selectedCand);
+        return;
+      }
+      svg.setAttribute('viewBox', '0 0 760 540');
 
       const W = 760, H = 540;
       const padL = 64, padR = 44, padT = 44, padB = 54;
@@ -7371,13 +7523,14 @@
         const labelText = state.blindMode ? `${c.city} ${getDisplayName(c)}` : `${c.city.slice(0,2)}·${c.name.slice(0,4)}`;
 
         return `
-          <g class="spectrum-node" opacity="${opacity}" onclick="selectSpectrumCandidate('${c.id}')">
+          <g class="spectrum-node" opacity="${opacity}" ${chartTipAttributes(`${getDisplayName(c)} · ${getDisplayParty(c)} · ${c.city} 縣市長 · (${c.x}, ${c.y})`)} onclick="selectSpectrumCandidate('${c.id}')">
             ${isSelected ? `<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="15" fill="${color}" opacity="0.22"/>` : ''}
             <circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="${r}" fill="${color}" stroke="${stroke}" stroke-width="${strokeW}"/>
             ${showLabel && isFilteredIn ? `
               <text x="${pt.x.toFixed(1)}" y="${(pt.y - r - 4).toFixed(1)}" text-anchor="middle" font-size="${isSelected ? '11.5' : '10'}" font-weight="${isSelected || isSameCity ? '700' : '500'}" fill="${isSelected ? '#0F172A' : '#334155'}" stroke="#FFFFFF" stroke-width="2.5" paint-order="stroke">${labelText}</text>
             ` : ''}
             <title>${c.city} ${getDisplayNum(c)} ${getDisplayName(c)} (${getDisplayParty(c)}) — 點擊檢視政見來源</title>
+            <circle class="chart-hit" cx="${pt.x}" cy="${pt.y}" r="${11 * 760 / chartWidth}"/>
           </g>
         `;
       }).join('');
@@ -7387,11 +7540,12 @@
         const u = state.userSpectrumProfile;
         const uPt = getPointXY({ x: u.x, y: u.y, breadth: 6, quantCount: 6 });
         userNodeMarkup = `
-          <g class="spectrum-node" onclick="switchMainTab('quiz')">
+          <g class="spectrum-node" ${chartTipAttributes(`您的測驗座標 (${u.x}, ${u.y})`)} onclick="switchMainTab('quiz')">
             <circle cx="${uPt.px.toFixed(1)}" cy="${uPt.py.toFixed(1)}" r="16" fill="#F59E0B" opacity="0.28"/>
             <circle cx="${uPt.px.toFixed(1)}" cy="${uPt.py.toFixed(1)}" r="8.5" fill="#D97706" stroke="#0F172A" stroke-width="2.5"/>
             <text x="${uPt.px.toFixed(1)}" y="${(uPt.py - 13).toFixed(1)}" text-anchor="middle" font-size="11.5" font-weight="800" fill="#B45309" stroke="#FFFFFF" stroke-width="3" paint-order="stroke">★ 您的測驗座標 (${u.x > 0 ? '+'+u.x : u.x}, ${u.y > 0 ? '+'+u.y : u.y})</text>
             <title>您的10題心理測驗政策座標 (${u.x}, ${u.y}) — 點擊返回測驗分析</title>
+            <circle class="chart-hit" cx="${uPt.px}" cy="${uPt.py}" r="${11 * 760 / chartWidth}"/>
           </g>
         `;
       }
@@ -7431,7 +7585,8 @@
     }
 
     function buildHexagonRadarSVG(candList, showNationalAvg = true) {
-      const cx = 180, cy = 148, maxR = 98;
+      const mobile = innerWidth < 640;
+      const cx = 180, cy = 148, maxR = mobile ? 82 : 98;
       const labels = ['育兒教育', '高齡長照', '軌道交通', '居住都更', '科技產業', '生態治理'];
       const angles = labels.map((_, i) => -Math.PI / 2 + (i * 2 * Math.PI) / 6);
 
@@ -7455,11 +7610,12 @@
       const spokes = angles.map((a, i) => {
         const x2 = cx + maxR * Math.cos(a);
         const y2 = cy + maxR * Math.sin(a);
-        const lx = cx + (maxR + 28) * Math.cos(a);
+        const lx = cx + (maxR + (mobile ? 14 : 28)) * Math.cos(a);
         const ly = cy + (maxR + 20) * Math.sin(a);
+        const anchor = mobile ? (Math.cos(a) > 0.1 ? 'start' : Math.cos(a) < -0.1 ? 'end' : 'middle') : 'middle';
         return `
           <line x1="${cx}" y1="${cy}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#CBD5E1" stroke-width="1"/>
-          <text x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="middle" font-size="11.5" font-weight="700" fill="#1E293B">${labels[i]}</text>
+          <text x="${lx.toFixed(1)}" y="${(ly + (mobile ? 6 + Math.sin(a)*3 : 4)).toFixed(1)}" text-anchor="${anchor}" font-size="${mobile ? 20 : 11.5}" font-weight="700" fill="#1E293B">${labels[i]}</text>
         `;
       }).join('');
 
@@ -7473,7 +7629,18 @@
         return `<polygon points="${toPts(c.radar)}" fill="${col}" fill-opacity="${candList.length === 1 ? '0.24' : '0.12'}" stroke="${col}" stroke-width="2.5"/>`;
       }).join('');
 
-      return rings + spokes + avgPoly + candPolys;
+      const vertices = candList.length === 1 && !showNationalAvg ? candList[0].radar.map((score,i) => {
+        const r = Math.max(0,Math.min(100,score))/100*maxR;
+        const x = cx+r*Math.cos(angles[i]), y = cy+r*Math.sin(angles[i]);
+        return `<g class="radar-vertex" ${chartTipAttributes(`${labels[i]}：${score} / 100`)}><circle cx="${x}" cy="${y}" r="3" fill="#D97706"/><circle class="chart-hit" cx="${x}" cy="${y}" r="${mobile ? 21 : 13}"/></g>`;
+      }).join('') : '';
+      if (mobile) requestAnimationFrame(() => {
+        const svg = document.querySelector('.quiz-radar');
+        if (!svg) return;
+        const box = svg.getBBox();
+        svg.setAttribute('viewBox', `${box.x-10} ${box.y-10} ${box.width+20} ${box.height+20}`);
+      });
+      return rings + spokes + avgPoly + candPolys + vertices;
     }
 
     function renderSpectrumInspector(c) {
@@ -8974,11 +9141,11 @@
             <div class="flex flex-wrap items-center justify-between gap-1 text-[11px] mb-1">
               <span class="font-bold text-slate-800">您的六項政策偏好</span>
               <div class="flex items-center gap-2">
-                <span class="inline-flex items-center gap-1 font-semibold text-blue-700"><span class="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block"></span>按各軸可達範圍換算</span>
-                <span class="inline-flex items-center gap-1 font-semibold text-teal-700"><span class="w-2.5 h-2.5 rounded-full bg-teal-600 inline-block"></span>您的測驗向量</span>
+                <span>按各軸可達範圍換算</span>
+                <span class="inline-flex items-center gap-1" style="color:#D97706"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#D97706"></span>您的測驗向量</span>
               </div>
             </div>
-            <svg viewBox="0 0 360 295" class="w-full max-w-[320px] mx-auto h-auto" aria-hidden="true">
+            <svg viewBox="0 0 360 295" class="quiz-radar" style="max-width: ${innerWidth < 640 ? 'none' : '320px'}" role="img" aria-label="您的六項政策偏好雷達圖">
               ${buildHexagonRadarSVG([userPseudoCand], false)}
             </svg>
           </div>` : '<p class="text-sm text-slate-600">部分議題資料不足，請參考下方各軸摘要。</p>'}
