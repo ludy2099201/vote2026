@@ -4,10 +4,12 @@
   "scripts": {
     "validate:data": "node scripts/validate-candidates.js",
     "build:data": "node scripts/build-inline-data.js",
-    "test:data": "node --test tests/*.test.js"
+    "test:data": "node --test tests/*.test.js",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
     "ajv": "^8.17.1",
-    "ajv-formats": "^3.0.1"
+    "ajv-formats": "^3.0.1",
+    "@playwright/test": "1.65.1"
   }
 }
