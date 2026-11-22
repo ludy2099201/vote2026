@@ -6960,6 +6960,9 @@
     // ============================================================================
     // 6. RENDERING: CITY CHIPS & GLOBAL COUNTERS
     // ============================================================================
+    const cityCounts = new Map(CITY_ORDER.map(city => [city, 0]));
+    CANDIDATES.forEach(c => cityCounts.set(c.city, cityCounts.get(c.city) + 1));
+
     function renderCityChipsAndCounters() {
       const partySelect = document.getElementById('party-filter-select');
       partySelect.disabled = state.blindMode;
@@ -6980,21 +6983,43 @@
       const chipContainer = document.getElementById('city-chip-container');
       if (chipContainer) {
         const allSelected = state.selectedCities.size === 22;
-        chipContainer.innerHTML = `<span class="text-[11px] font-bold text-slate-500 mr-1">單選／多選縣市：</span>` +
+        if (!chipContainer.childElementCount) chipContainer.innerHTML = `<span class="text-[11px] font-bold text-slate-500 mr-1">單選／多選縣市：</span>` +
           CITY_ORDER.map(city => {
             const active = state.selectedCities.has(city);
-            const count = CANDIDATES.filter(c => c.city === city).length;
+            const count = cityCounts.get(city);
             const cls = active
               ? (allSelected ? 'bg-slate-200/90 text-slate-800 border-slate-300 hover:bg-blue-100' : 'bg-blue-700 text-white border-blue-700')
               : 'bg-white text-slate-400 border-slate-200 hover:text-slate-700';
             return `<button type="button" onclick="toggleCitySelection('${city}')" class="px-1.5 py-0.5 rounded border text-[11px] font-medium transition ${cls}">${city}(${count})</button>`;
           }).join('');
+        chipContainer.querySelectorAll('button').forEach((button, index) => {
+          const active = state.selectedCities.has(CITY_ORDER[index]);
+          const cls = active
+            ? (allSelected ? 'bg-slate-200/90 text-slate-800 border-slate-300 hover:bg-blue-100' : 'bg-blue-700 text-white border-blue-700')
+            : 'bg-white text-slate-400 border-slate-200 hover:text-slate-700';
+          button.className = 'px-1.5 py-0.5 rounded border text-[11px] font-medium transition ' + cls;
+        });
       }
     }
 
     // ============================================================================
     // 7. RENDERING: VIEW 1 — CROSS-CITY ISSUE HORIZONTAL MATRIX
     // ============================================================================
+    const matrixRows = new Map();
+    let matrixHeadIssue;
+    let matrixBannerSignature;
+
+    function cachedMatrixRow(c, render) {
+      const signature = JSON.stringify([state.selectedIssue, state.blindMode, state.pinnedIds.includes(c.id)]);
+      const cached = matrixRows.get(c.id);
+      if (cached?.signature === signature) return cached.row;
+      const template = document.createElement('template');
+      template.innerHTML = render();
+      const row = template.content.firstElementChild;
+      matrixRows.set(c.id, { signature, row });
+      return row;
+    }
+
     function renderMatrixView() {
       const filtered = getFilteredCandidates();
       const banner = document.getElementById('issue-benchmark-banner');
@@ -7070,7 +7095,9 @@
       };
 
       const activeBench = benchmarks[state.selectedIssue] || benchmarks.all;
-      if (banner) {
+      const bannerSignature = JSON.stringify([state.selectedIssue, state.blindMode]);
+      if (banner && matrixBannerSignature !== bannerSignature) {
+        matrixBannerSignature = bannerSignature;
         banner.hidden = state.blindMode;
         banner.innerHTML = state.blindMode ? '' : `
           <div class="text-xs sm:text-sm font-bold text-blue-200 mb-2.5">${activeBench.title}</div><p class="text-sm text-white mb-2">各條目按原有單位顯示。補助對象、金額、期間與財源請查官方公報，摘要未列的期間或財源視為未確認。</p>
@@ -7095,8 +7122,9 @@
       }
 
       // Render Table Head & Body
+      let rows;
       if (state.selectedIssue === 'all') {
-        thead.innerHTML = `
+        if (matrixHeadIssue !== state.selectedIssue) thead.innerHTML = `
           <tr>
             <th class="py-3 px-3 min-w-[180px] sticky left-0 bg-slate-100 z-20 border-r border-slate-200">縣市 / 候選人 / 公報</th>
             <th class="py-3 px-3 min-w-[195px]">1. 育兒與教育</th>
@@ -7108,7 +7136,7 @@
           </tr>
         `;
 
-        tbody.innerHTML = filtered.map(c => {
+        rows = filtered.map(c => cachedMatrixRow(c, () => {
           const isPinned = state.pinnedIds.includes(c.id);
           return `
             <tr class="hover:bg-blue-50/40 transition cursor-pointer" onclick="openCandidateModal('${c.id}')">
@@ -7136,7 +7164,7 @@
               <td class="py-3 px-3 align-top text-xs text-slate-700 leading-relaxed">${renderPolicyEvidence(c, 'governance')}</td>
             </tr>
           `;
-        }).join('');
+        }));
       } else {
         // Focused Single Issue View with Highlight Chips & Intensity Bar
         const issueKey = state.selectedIssue;
@@ -7144,7 +7172,7 @@
         const radarIdx = issueIndexMap[issueKey] || 0;
         const meta = ISSUE_META[issueKey];
 
-        thead.innerHTML = `
+        if (matrixHeadIssue !== state.selectedIssue) thead.innerHTML = `
           <tr>
             <th class="py-3 px-4 w-48">縣市 / 號次 / 候選人</th>
             <th class="py-3 px-3 w-40">登記政黨 / 公報型態</th>
@@ -7154,7 +7182,7 @@
           </tr>
         `;
 
-        tbody.innerHTML = filtered.map(c => {
+        rows = filtered.map(c => cachedMatrixRow(c, () => {
           const isPinned = state.pinnedIds.includes(c.id);
 
           return `
@@ -7187,8 +7215,16 @@
               </td>
             </tr>
           `;
-        }).join('');
+        }));
       }
+      matrixHeadIssue = state.selectedIssue;
+      const visibleRows = new Set(rows);
+      Array.from(tbody.children).forEach(row => { if (!visibleRows.has(row)) row.remove(); });
+      let next = tbody.firstElementChild;
+      rows.forEach(row => {
+        if (row === next) next = next.nextElementSibling;
+        else tbody.insertBefore(row, next);
+      });
     }
 
     // ============================================================================
@@ -7521,13 +7557,16 @@
     // ============================================================================
     // 9. RENDERING: VIEW 3 — SIDE-BY-SIDE COMPARISON WORKBENCH
     // ============================================================================
+    let compareOptionsBlindMode;
+    let compareSignature;
+
     function renderCompareView() {
       const pinnedCands = state.pinnedIds.map(id => CANDIDATES.find(c => c.id === id)).filter(Boolean);
 
       // Populate Add Candidate Dropdown
       const addSel = document.getElementById('add-compare-select');
       if (addSel) {
-        addSel.innerHTML = `<option value="">從全臺 ${CANDIDATES.length} 位候選人加入…</option>` +
+        if (compareOptionsBlindMode !== state.blindMode) addSel.innerHTML = `<option value="">從全臺 ${CANDIDATES.length} 位候選人加入…</option>` +
           orderedCandidates(CANDIDATES).map(c => {
             const disabled = state.pinnedIds.includes(c.id) ? 'disabled' : '';
             return `<option value="${c.id}" ${disabled}>${c.city} ${getDisplayNum(c)} ${getDisplayName(c)} (${getDisplayParty(c)})</option>`;
@@ -7535,6 +7574,17 @@
       }
 
       // Render Overlaid Radar SVG
+      if (addSel) {
+        compareOptionsBlindMode = state.blindMode;
+        Array.from(addSel.options).forEach(option => {
+          option.disabled = state.pinnedIds.includes(option.value);
+        });
+        addSel.value = '';
+      }
+      const signature = JSON.stringify([state.pinnedIds, state.blindMode]);
+      if (compareSignature === signature) return;
+      compareSignature = signature;
+
       const radarSvg = document.getElementById('compare-radar-svg');
       const radarLegend = document.getElementById('compare-radar-legend');
       const palette = ['#2563EB', '#0D9488', '#D97706', '#7C3AED', '#DC2626', '#0F172A'];
