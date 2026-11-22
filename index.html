@@ -6641,7 +6641,9 @@
 
     function policyDisplayText(value) {
       if (!state.blindMode || !value) return value;
-      for (const candidate of CANDIDATES) value = value.replaceAll(candidate.name, '〔姓名已遮蔽〕');
+      const identities = [...new Set(CANDIDATES.flatMap(candidate => [candidate.name, candidate.party]))]
+        .filter(Boolean).sort((a, b) => b.length - a.length);
+      for (const identity of identities) value = value.replaceAll(identity, '〔身分已遮蔽〕');
       return value;
     }
 
@@ -6765,6 +6767,13 @@
 
     function toggleBlindMode() {
       state.blindMode = !state.blindMode;
+      hideChartTooltip();
+      if (state.blindMode) {
+        document.querySelectorAll('[data-chart-tip]').forEach(target => {
+          target.dataset.chartTip = policyDisplayText(target.dataset.chartTip);
+          target.setAttribute('aria-label', policyDisplayText(target.getAttribute('aria-label')));
+        });
+      }
       closeCandidateModal();
       if (state.blindMode) {
         state.partyFilter = 'all';
@@ -6966,9 +6975,16 @@
     const cityCounts = new Map(CITY_ORDER.map(city => [city, 0]));
     CANDIDATES.forEach(c => cityCounts.set(c.city, cityCounts.get(c.city) + 1));
 
+    const partyFilterLabels = new Map(Array.from(document.getElementById('party-filter-select').options,
+      option => [option.value, option.textContent]));
+
     function renderCityChipsAndCounters() {
       const partySelect = document.getElementById('party-filter-select');
       partySelect.disabled = state.blindMode;
+      Array.from(partySelect.options).forEach(option => {
+        option.textContent = state.blindMode && option.value !== 'all'
+          ? '政黨已遮蔽（盲測中）' : partyFilterLabels.get(option.value);
+      });
       partySelect.value = state.partyFilter;
       document.getElementById('blind-mode-note').hidden = !state.blindMode;
       document.querySelectorAll('[data-blind-hide]').forEach(element => { element.hidden = state.blindMode; });
@@ -7244,7 +7260,7 @@
       const tip = document.createElement('div');
       tip.id = 'chart-tooltip';
       tip.setAttribute('role', 'tooltip');
-      tip.textContent = target.dataset.chartTip;
+      tip.textContent = policyDisplayText(target.dataset.chartTip);
       document.body.appendChild(tip);
       const current = [...document.querySelectorAll('[data-chart-tip]')].find(node => node.dataset.chartTip === target.dataset.chartTip) || target;
       const rect = current.getBoundingClientRect();
@@ -7309,6 +7325,7 @@
     window.addEventListener('orientationchange', resizePolicyCharts);
 
     function chartTipAttributes(text) {
+      text = policyDisplayText(text);
       return `tabindex="0" role="button" data-chart-tip="${escapeHtml(text)}" aria-label="${escapeHtml(text)}"`;
     }
 
@@ -9080,7 +9097,7 @@
                     <div class="rounded-xl border transition ${selected ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-300' : 'border-slate-200 bg-slate-50/60 hover:border-indigo-300 hover:bg-indigo-50/40'}">
                       <button type="button" aria-pressed="${selected}" onclick="selectQuizOption(${idx},'${opt.code}')" class="w-full rounded-xl px-3.5 pt-3.5 pb-2 text-left flex gap-3 items-start min-h-[62px] group">
                         <span aria-hidden="true" class="h-8 w-8 shrink-0 rounded-lg grid place-items-center font-black text-xs ${selected ? 'bg-indigo-700 text-white' : 'bg-white border border-slate-200 text-indigo-700 group-hover:border-indigo-300'}">${selected ? '✓' : opt.radar ? opt.code : '—'}</span>
-                        <span class="flex-1 text-sm font-bold text-slate-900 leading-relaxed">${opt.tag}</span>
+                        <span class="flex-1 text-sm font-bold text-slate-900 leading-relaxed">${policyDisplayText(opt.tag)}</span>
                         <span class="text-indigo-500 shrink-0 mt-1 text-xs" aria-hidden="true">${selected ? '已選' : '○'}</span>
                       </button>
                       ${opt.desc && !state.blindMode ? `<details class="mx-3.5 mb-2.5 ml-[60px] text-xs text-slate-600">

@@ -66,15 +66,12 @@ test('blind mode hides candidate names and reveals identities', async ({ page })
   }
 });
 
-test('blind mode strictly hides all visible identities', {
-  annotation: { type: 'issue', description: 'Known bug on main: policyDisplayText() replaces candidate names but not party names in blind mode, e.g. 「司法改革黨：司法同議」' },
-}, async ({ page }) => {
+test('blind mode strictly hides all visible identities', async ({ page }) => {
   await page.goto('/#matrix');
   const identities = await page.evaluate(() => [...new Set(CANDIDATES.flatMap(c => [c.name, c.party]))]);
   await page.locator('#btn-blind-toggle').click();
   await expect(page.locator('#btn-blind-toggle')).toHaveAttribute('aria-pressed', 'true');
   const visibleText = await page.locator('body').innerText();
-  test.fail();
   expect(identities.filter(name => visibleText.includes(name)), 'identities leaked in visible text').toEqual([]);
 });
 
