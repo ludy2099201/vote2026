@@ -8860,7 +8860,7 @@
       try { sessionStorage.setItem(DUEL_STORAGE, JSON.stringify(duelHistory)); } catch {}
     }
 
-    function startDuel(city, restart = false, moveFocus = false) {
+    function startDuel(city, restart = false) {
       duelSelection = city;
       duelIssue = document.getElementById('duel-issue').value;
       try {
@@ -8949,8 +8949,8 @@
       }
       duelUpdated = !restart && Array.isArray(saved?.votes) && duelVotes.length < saved.votes.length;
       if (restart || (!duelUpdated && duelVotes.length && !saved.content)) saveDuel();
-      duelPlaying = moveFocus;
-      renderDuel(moveFocus);
+      duelPlaying = restart;
+      renderDuel(restart);
     }
     function enterDuel() {
       duelPlaying = true;
@@ -8972,7 +8972,9 @@
     function switchDuelIssue(key) {
       const select = document.getElementById('duel-issue');
       select.value = key;
-      startDuel(duelSelection,false,true);
+      startDuel(duelSelection);
+      const start = document.getElementById('duel-start');
+      focusDuelSection(start, start);
     }
 
     function voteDuel(side) {
@@ -8984,7 +8986,7 @@
       renderDuel();
     }
     function restartDuel() {
-      if (window.confirm('清除本縣市與議題的作答後重新開始？')) startDuel(duelSelection,true,true);
+      if (window.confirm('清除本縣市與議題的作答後重新開始？')) startDuel(duelSelection,true);
     }
 
     function previousDuel() {

@@ -163,6 +163,21 @@ test('duel renders policy separators in the visible text and button name', async
   expect(await card.ariaSnapshot()).toMatch(separator);
 });
 
+test('suggested issue waits for the explicit start action', async ({ page }, info) => {
+  const touch = info.project.name === 'mobile';
+  await open(page, '臺南市', touch);
+  const issue = page.locator('#duel-issue');
+  await issue.selectOption('housing');
+  await expect(cards(page)).toHaveCount(0);
+  await activate(page.locator(play).getByRole('button', { name: '育兒與教育（6 場）' }), touch);
+  await expect(issue).toHaveValue('childcare');
+  await expect(cards(page)).toHaveCount(0);
+  await expect(start(page)).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(heading(page)).toBeFocused();
+  await expect(cards(page)).toHaveCount(2);
+});
+
 for (const width of [320, 414]) {
   test(`duel progress stays visible at ${width}px`, async ({ page }, info) => {
     test.skip(info.project.name !== 'mobile');
