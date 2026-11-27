@@ -24,9 +24,10 @@ test('FLOW-01 / C04: every candidate has balanced sides and a deterministic slat
       for (const { value: issue } of issueSelect.options) {
         issueSelect.value = issue;
         startDuel(city);
-        const slate = duelSlate();
+        const readSlate = () => duelRounds.map(({key, pair}) => [key, ...pair.map(candidate => candidate.id)]);
+        const slate = readSlate();
         startDuel(city);
-        if (JSON.stringify(slate) !== JSON.stringify(duelSlate())) failures.push({ city, issue, slate });
+        if (JSON.stringify(slate) !== JSON.stringify(readSlate())) failures.push({ city, issue, slate });
         for (const { id } of people) {
           const a = slate.filter(([, left]) => left === id).length;
           const b = slate.filter(([, , right]) => right === id).length;
@@ -155,31 +156,38 @@ test('C07: spacing and punctuation variants of identical text never pair', async
   expect(result.map(entry => entry.paired)).toEqual([false, false, false, true]);
 });
 
-test('an in-progress pre-change slate keeps topic order, sides, and votes until restart', async ({ page }) => {
-  await openDuel(page);
-  await selectDuel(page, '新北市');
-  // Captured from a9e7197, including the two rounds that put NTP-1 on side A.
-  const slate = [['childcare', 'NTP-1', 'NTP-2'], ['senior', 'NTP-1', 'NTP-3'], ['transit', 'NTP-2', 'NTP-3']];
-  const readSlate = () => page.evaluate(() => duelSlate());
-  expect.soft(await readSlate()).not.toEqual(slate);
-  await page.evaluate(({ historyKey, slate }) => {
-    const content = slate.map(([issue, ...ids]) => ids.map(id => duelCardText(CANDIDATES.find(c => c.id === id), issue)));
-    sessionStorage.setItem(historyKey, JSON.stringify({ '新北市/all': { slate, content, votes: ['NTP-1'] } }));
-  }, { historyKey, slate });
-  await page.reload({ waitUntil: 'domcontentloaded' });
-  const play = page.locator('#duel-play');
-  await expect(play.getByRole('progressbar')).toHaveAttribute('value', '1');
-  expect(await readSlate()).toEqual(slate);
-  await selectDuel(page, '臺北市');
-  await selectDuel(page, '新北市');
-  await expect(play.getByRole('heading')).toContainText('第 2 / 3 場');
-  await play.getByRole('button', { name: /^方案 B/ }).click();
-  await play.getByRole('button', { name: /^方案 B/ }).click();
-  const saved = await page.evaluate(key => JSON.parse(sessionStorage.getItem(key))['新北市/all'], historyKey);
-  expect(saved.slate).toEqual(slate);
-  expect(saved.votes).toEqual(['NTP-1', 'NTP-3', 'NTP-3']);
-  page.once('dialog', dialog => dialog.accept());
-  await play.getByRole('button', { name: '重新對決' }).click();
-  await expect(play.getByRole('progressbar')).toHaveAttribute('value', '0');
-  expect(await readSlate()).not.toEqual(slate);
-});
+for (const version of [1, 2]) {
+  test(`a pre-change v${version} slate preserves topic order, sides, and votes until restart`, async ({ page }) => {
+    await openDuel(page);
+    await selectDuel(page, '新北市');
+    // Captured from a9e7197, including the two rounds that put NTP-1 on side A.
+    const slate = [['childcare', 'NTP-1', 'NTP-2'], ['senior', 'NTP-1', 'NTP-3'], ['transit', 'NTP-2', 'NTP-3']];
+    const readSlate = () => page.evaluate(() => duelRounds.map(({key, pair}) => [key, ...pair.map(candidate => candidate.id)]));
+    expect.soft(await readSlate()).not.toEqual(slate);
+    await page.evaluate(({ historyKey, slate, version }) => {
+      const content = slate.map(([issue, ...ids]) => ids.map(id => duelCardText(CANDIDATES.find(c => c.id === id), issue)));
+      const entry = version === 1 ? { slate, content, votes: ['NTP-1'] }
+        : { v: 2, votes: [0], rounds: [duelFingerprint(slate[0], content[0])] };
+      sessionStorage.setItem(historyKey, JSON.stringify({ '新北市/all': entry }));
+    }, { historyKey, slate, version });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    const play = page.locator('#duel-play');
+    await expect(play.getByRole('progressbar')).toHaveAttribute('value', '1');
+    expect(await readSlate()).toEqual(slate);
+    await selectDuel(page, '臺北市');
+    await selectDuel(page, '新北市');
+    await expect(play.getByRole('heading')).toContainText('第 2 / 3 場');
+    await play.getByRole('button', { name: /^方案 B/ }).click();
+    await play.getByRole('button', { name: /^方案 B/ }).click();
+    await page.reload();
+    expect(await readSlate()).toEqual(slate);
+    expect(await page.evaluate(() => duelVotes)).toEqual(['NTP-1', 'NTP-3', 'NTP-3']);
+    const saved = await page.evaluate(key => sessionStorage.getItem(key), historyKey);
+    expect(JSON.parse(saved)['新北市/all']).toMatchObject({v: 2, votes: [0, 1, 1]});
+    expect(saved).not.toMatch(/NTP-|slate|content/);
+    page.once('dialog', dialog => dialog.accept());
+    await play.getByRole('button', { name: '重新對決' }).click();
+    await expect(play.getByRole('progressbar')).toHaveAttribute('value', '0');
+    expect(await readSlate()).not.toEqual(slate);
+  });
+}
