@@ -8793,6 +8793,7 @@
     let duelRounds = [], duelVotes = [], duelPaused = false;
     let duelSelection = '', duelIssue = 'all', duelHistory = {};
     let duelAvailableIssues = [], duelMissingPairs = [], duelUpdated = false;
+    let duelSummaryCount = 0, duelCandidateCount = 0;
     try { duelHistory = JSON.parse(sessionStorage.getItem(DUEL_STORAGE)) || {}; } catch {}
 
     function duelSlate() {
@@ -8811,6 +8812,14 @@
 
     function duelCardText(candidate, key) {
       return duelCardSource(candidate,key)?.summary ?? candidate.issues[key];
+    }
+
+    function duelComparisonText(candidate, key) {
+      return (duelCardText(candidate,key) || '').normalize('NFKC')
+        .replace(/。/g, '.').replace(/、/g, ',').replace(/\s+/g, ' ')
+        .replace(/(?<=\p{Script=Han}) (?=\p{Script=Han})/gu, '')
+        .replace(/ *([,;:]) */g, '$1')
+        .split(';').map(point => point.replace(/[.!?\s]+$/, '').trimStart()).filter(Boolean).join(';');
     }
 
     function renderDuelCard(candidate, key) {
@@ -8840,6 +8849,82 @@
       try { sessionStorage.setItem(DUEL_STORAGE, JSON.stringify(duelHistory)); } catch {}
     }
 
+    function assignDuelTopics(matches, issueKeys) {
+      const assigned = new Map(issueKeys.map(key => [key, new Set()]));
+      for (const match of matches) {
+        const path = new Map(match.keys.map(key => [key, match]));
+        // An alternating path can move existing rounds without changing any
+        // topic counts except the destination, which gains one round.
+        for (const key of path.keys()) {
+          for (const round of assigned.get(key)) {
+            for (const alternative of round.keys) {
+              if (!path.has(alternative)) path.set(alternative, round);
+            }
+          }
+        }
+        // The first round has a coverage bonus. Later rounds have an increasing
+        // squared-count cost (2n + 1), so the least-used reachable issue is best.
+        // Fixed issue order breaks ties. The search follows insertion order.
+        let target;
+        for (const key of issueKeys) {
+          if (path.has(key) && (!target || assigned.get(key).size < assigned.get(target).size)) target = key;
+        }
+        while (target) {
+          const round = path.get(target);
+          const previous = round.key;
+          if (previous) assigned.get(previous).delete(round);
+          round.key = target;
+          assigned.get(target).add(round);
+          target = previous;
+        }
+      }
+      return matches;
+    }
+
+    function balanceDuelSides(rounds, people) {
+      const extra = Symbol();
+      const incident = new Map([...people, extra].map(candidate => [candidate, []]));
+      const connect = (a, b, round) => {
+        const edge = { a, b, round, used: false };
+        incident.get(a).push(edge);
+        incident.get(b).push(edge);
+      };
+      for (const round of rounds) {
+        const [a, b] = round.pair;
+        connect(a, b, round);
+      }
+      // Adding one dummy edge at each odd-degree vertex makes every walk close.
+      // Orienting along those walks balances both sides before dummy edges go.
+      for (const candidate of people) {
+        if (incident.get(candidate).length % 2) connect(candidate, extra);
+      }
+      for (const start of incident.keys()) {
+        let candidate = start;
+        while (incident.get(candidate).length) {
+          const edge = incident.get(candidate).pop();
+          if (edge.used) continue;
+          edge.used = true;
+          const opponent = edge.a === candidate ? edge.b : edge.a;
+          if (edge.round) edge.round.pair = [candidate, opponent];
+          candidate = opponent;
+        }
+      }
+    }
+
+    function restoreDuelSlate(slate, people, issue) {
+      if (!Array.isArray(slate) || !slate.length) return null;
+      const byId = new Map(people.map(candidate => [candidate.id, candidate]));
+      const rounds = [];
+      for (const row of slate) {
+        if (!Array.isArray(row) || row.length !== 3) return null;
+        const [key, left, right] = row;
+        if (!Object.hasOwn(ISSUE_META, key) || (issue !== 'all' && key !== issue)
+          || left === right || !byId.has(left) || !byId.has(right)) return null;
+        rounds.push({ pair: [byId.get(left), byId.get(right)], key });
+      }
+      return rounds;
+    }
+
     function startDuel(city, restart = false, moveFocus = false) {
       duelSelection = city;
       duelIssue = document.getElementById('duel-issue').value;
@@ -8850,56 +8935,47 @@
       duelRounds = [];
       duelPaused = false;
       const people = CANDIDATES.filter(c => c.city === city);
-      const issueUse = {};
+      const issueKeys = Object.keys(ISSUE_META);
       const eligible = (candidate, key) => ['有原始來源','已有查證摘要・逐條引文待補'].includes(policyRecord(candidate,key).status);
-      const issueCounts = Object.fromEntries(Object.keys(ISSUE_META).map(key => [key, 0]));
+      const summaries = people.map(candidate => new Map(issueKeys
+        .filter(key => eligible(candidate,key))
+        .map(key => [key, duelComparisonText(candidate,key)])));
+      duelCandidateCount = people.length;
+      duelSummaryCount = summaries.filter(issues => duelIssue === 'all'
+        ? [...issues.values()].some(Boolean) : issues.get(duelIssue)).length;
+      const issueCounts = Object.fromEntries(issueKeys.map(key => [key, 0]));
       const missingPairs = [];
-      const eligibleKeysByRound = [];
+      const matches = [];
       for (let i = 0; i < people.length; i++) {
         for (let j = i + 1; j < people.length; j++) {
-          const [a,b] = [people[i], people[j]];
-          const keys = Object.keys(ISSUE_META).filter(key => eligible(a,key) && eligible(b,key) && duelCardText(a,key) !== duelCardText(b,key));
+          const pair = [people[i], people[j]];
+          const keys = issueKeys.filter(key => {
+            const a = summaries[i].get(key), b = summaries[j].get(key);
+            return a && b && a !== b;
+          });
           keys.forEach(key => issueCounts[key]++);
-          if (!(duelIssue === 'all' ? keys.length : keys.includes(duelIssue))) missingPairs.push([a,b]);
-          const selected = duelIssue !== 'all' ? keys.filter(key => key === duelIssue) : people.length === 2
-            ? keys : keys.sort((left,right) => (issueUse[left] || 0) - (issueUse[right] || 0)).slice(0,1);
-          for (const key of selected) {
-            const alternate = (i + j + duelRounds.length) % 2;
-            duelRounds.push({pair: alternate ? [a,b] : [b,a], key});
-            eligibleKeysByRound.push(keys);
-            issueUse[key] = (issueUse[key] || 0) + 1;
-          }
+          const selected = duelIssue === 'all' ? keys : keys.filter(key => key === duelIssue);
+          if (selected.length) matches.push({pair, keys: selected});
+          else missingPairs.push(pair);
         }
       }
       duelAvailableIssues = Object.entries(issueCounts).filter(([,count]) => count > 0);
-      if (duelIssue === 'all' && people.length > 2) {
-        // Move a comparison from a repeated issue to an unused one, following
-        // a chain of eligible assignments when a direct swap is unavailable.
-        function coverIssue(key, visited) {
-          if (visited.has(key)) return false;
-          visited.add(key);
-          for (const [index, round] of duelRounds.entries()) {
-            const previous = round.key;
-            if (previous === key || !eligibleKeysByRound[index].includes(key)) continue;
-            if (issueUse[previous] > 1 || coverIssue(previous, visited)) {
-              round.key = key;
-              issueUse[previous]--;
-              issueUse[key] = (issueUse[key] || 0) + 1;
-              return true;
-            }
-          }
-          return false;
-        }
-
-        for (const [key] of duelAvailableIssues) {
-          if (!issueUse[key]) coverIssue(key, new Set());
-        }
+      const saved = duelHistory[city + '/' + duelIssue];
+      const stored = !restart && Array.isArray(saved?.votes) && saved.votes.length
+        ? restoreDuelSlate(saved.slate, people, duelIssue) : null;
+      if (stored) {
+        duelRounds = stored;
+      } else {
+        duelRounds = duelIssue === 'all' && people.length > 2
+          ? assignDuelTopics(matches, issueKeys)
+          : matches.flatMap(({pair, keys}) => keys.map(key => ({pair, key})));
+        balanceDuelSides(duelRounds, people);
       }
       duelMissingPairs = missingPairs;
       for (const option of document.getElementById('duel-issue').options) {
         if (option.value === 'all') continue;
         option.textContent = ISSUE_META[option.value].label + (city
-          ? issueCounts[option.value] ? '（' + issueCounts[option.value] + ' 場）' : '（摘要不足）'
+          ? '（' + issueCounts[option.value] + ' 場）'
           : '');
       }
       document.getElementById('duel-preview').textContent = city
@@ -8907,13 +8983,16 @@
       if (city) {
         const coverage = people.map(candidate => duelRounds.filter(round => round.pair.includes(candidate)).length);
         const min = Math.min(...coverage), max = Math.max(...coverage);
-        const issues = [...new Set(duelRounds.map(round => round.key))].map(key => ISSUE_META[key].label);
+        const scheduled = new Set(duelRounds.map(round => round.key));
+        const issues = [...scheduled].map(key => ISSUE_META[key].label);
+        const unsampled = duelIssue === 'all' ? duelAvailableIssues
+          .filter(([key]) => !scheduled.has(key)).map(([key]) => ISSUE_META[key].label) : [];
         document.getElementById('duel-preview').textContent += '。本輪涵蓋 ' + (issues.join('、') || '零項議題')
           + '。每位候選人安排 ' + (min === max ? max : min + '–' + max) + ' 場。'
-          + (min !== max ? '部分候選人之間缺少同議題比較。' : '')
+          + (min !== max ? '部分候選人沒有共同議題可比較，出場機會不同。結果僅列逐場選擇與出場紀錄。' : '')
+          + (unsampled.length ? '綜合比較未抽到' + unsampled.join('、') + '，可改選這些議題單獨比較。' : '')
           + (duelRounds.length > 7 ? '每七場提供分段休息。' : '');
       }
-      const saved = duelHistory[city + '/' + duelIssue];
       const slate = duelSlate();
       const content = duelContent();
       duelVotes = [];
@@ -8956,7 +9035,10 @@
     function renderDuel(moveFocus = true) {
       const el=document.getElementById('duel-play'), city=document.getElementById('duel-city').value;
       if (!city || !duelRounds.length) {
-        el.innerHTML = city ? '<p>目前摘要不足以在 '+city+' 安排「'+(ISSUE_META[duelIssue]?.label || '綜合比較')+'」對決。</p>' +
+        const reason = duelSummaryCount
+          ? duelSummaryCount+'／'+duelCandidateCount+' 位候選人有已查證摘要，目前無共同對手可比較不同摘要。'
+          : '缺少已查證摘要，無法安排對決。';
+        el.innerHTML = city ? '<p>'+city+'「'+(ISSUE_META[duelIssue]?.label || '綜合比較')+'」共 0 場。'+reason+'</p>' +
           (duelAvailableIssues.length ? '<p>改選有題目的議題</p><div class="flex flex-wrap gap-2">' + duelAvailableIssues.map(([key,count]) => '<button type="button" class="min-h-[44px] rounded-lg border px-3 py-2" onclick="switchDuelIssue(this.value)" value="'+key+'">'+ISSUE_META[key].label+'（'+count+' 場）</button>').join('')+'</div>' : '<p>請從上方縣市選單改選地區。</p>') : '';
         return;
       }
