@@ -9,6 +9,8 @@ async function openDuel(page, city, issue, blind = false) {
   await page.locator('#local-duel > summary').click();
   await page.locator('#duel-city').selectOption(city);
   await page.locator('#duel-issue').selectOption(issue);
+  const start = page.getByRole('button', { name: '開始對決', exact: true });
+  if (await start.isVisible()) await start.click();
 }
 
 async function finishDuel(page) {
@@ -81,11 +83,14 @@ test('C03: Kinmen housing summaries without comparable measures stay reviewable 
   await openDuel(page, '金門縣', 'housing', true);
   for (const card of await cards(page).all()) await expect(card).not.toContainText('未詳列住宅方案');
   await expect(cards(page)).toHaveCount(0);
+  await expect(play(page)).toContainText('3／7 位候選人有已查證摘要，但沒有可比較的措施。');
+  await expect(play(page)).not.toContainText('公報來源');
   await expect(play(page)).not.toContainText('活化閒置營區');
   await page.locator('#btn-blind-toggle').click();
   await play(page).getByText('查看比較覆蓋範圍', { exact: true }).click();
   await openBulletins(play(page));
+  await expect(play(page)).toContainText('未說明營區將提供住宅或其他居住措施。');
   await expect(play(page)).toContainText('活化閒置營區');
   await expect(play(page)).toContainText('城鄉建設');
-  await expect(play(page).getByRole('link', { name: '金門縣選舉公報 PDF 第 1 頁' })).not.toHaveCount(0);
+  await expect(play(page).getByRole('link', { name: '金門縣選舉公報 PDF 第 1 頁' })).toHaveCount(3);
 });
