@@ -1782,6 +1782,19 @@
   #view-quiz .quiz-option-details { min-height: 44px; padding-block: 12px; }
   :is(button, a, select, summary, input):focus-visible { outline: 3px solid #4338ca !important; outline-offset: 3px; }
   .quiz-axis-values li { line-height: 1.6; }
+  #local-duel :is(button, select, summary) { min-width: 44px; min-height: 44px; }
+  #local-duel summary { padding-block: 10px; }
+  .duel-selectors, .duel-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 8px; }
+  .duel-selectors label { display: flex; align-items: center; gap: 8px; }
+  .duel-selectors select { max-width: 100%; }
+  #duel-start { color: white; background: #4338ca; }
+  .duel-progress { display: block; width: 100%; max-width: 20rem; margin-block: 4px 8px; }
+  .duel-stats { width: 100%; max-width: 32rem; margin-block: 12px; }
+  .duel-stats :is(th, td) { padding: 6px; border-bottom: 1px solid var(--line); text-align: center; }
+  .duel-stats th:first-child { text-align: left; }
+  @media (max-width: 639px) {
+    .duel-selectors { display: grid; }
+  }
   [hidden] { display: none !important; }
   @media (max-width: 640px) { .quiz-step-track { scroll-padding-inline: 4px; } }
 </style></head>
@@ -2197,8 +2210,19 @@
         <div class="quiz-rule">十題單選，選出你會優先推動的方案。可跳題或回頭修改。</div>
         <div>每個方案可能包含多項承諾。若只支持部分承諾、沒有符合的方案或還不確定，可直接選擇對應回答。</div>
         <div>全臺情境測驗免選縣市。完成十題且至少三題有效計分、兩軸各有至少兩題提供方向，才顯示全臺座標比較。</div>
-        <button type="button" class="atlas-enter" id="quiz-enter" onclick="enterQuiz()">開始作答</button> <button type="button" class="atlas-enter" onclick="document.getElementById('local-duel').open=true;document.getElementById('duel-city').focus()">開始縣市對決</button></div></div>
-      <details class="quiz-storage" id="local-duel"><summary><strong>縣市對決｜政策殘酷二選一</strong></summary><p>選擇縣市與關心的議題，再逐場選出優先方案。進度保留在此分頁，重新整理或切換縣市後可以續答。</p><label>對決縣市 <select class="border rounded p-2" id="duel-city" onchange="startDuel(this.value)"><option value="">請選擇</option></select></label><label>比較議題 <select id="duel-issue" class="border rounded p-2" onchange="startDuel(document.getElementById('duel-city').value)"></select></label><p id="duel-preview"></p><div id="duel-play" aria-live="polite"></div></details>
+        <button type="button" class="atlas-enter" id="quiz-enter" onclick="enterQuiz()">開始作答</button> <button type="button" class="atlas-enter" onclick="openDuelSetup()">開始縣市對決</button></div></div>
+      <details class="quiz-storage" id="local-duel">
+        <summary><strong>縣市對決｜政策殘酷二選一</strong></summary>
+        <p>選擇縣市與議題，逐場比較兩份政見摘要。難以選擇時可跳過；結果不是投票建議。</p>
+        <div class="duel-selectors">
+          <label>對決縣市 <select class="border rounded p-2" id="duel-city" onchange="startDuel(this.value)"><option value="">請選擇</option></select></label>
+          <label>比較議題 <select id="duel-issue" class="border rounded p-2" onchange="startDuel(document.getElementById('duel-city').value)"></select></label>
+        </div>
+        <p id="duel-preview" hidden></p>
+        <button type="button" id="duel-start" class="mt-2 rounded-lg px-3 py-2 font-bold" onclick="enterDuel()" hidden>開始對決</button>
+        <details id="duel-preview-coverage" hidden><summary>查看本輪涵蓋的議題</summary><p></p></details>
+        <div id="duel-play" aria-live="polite"></div>
+      </details>
 <details class="quiz-storage" id="roster-illustration" hidden><summary>查看縣市首長主要候選人對照圖</summary><p>使用者提供的圖表，僅列主要人選。對決涵蓋範圍依本站可比較的政見摘要決定。</p></details>
 <details class="quiz-storage" id="quiz-method"><summary>六大議題與計分方式</summary><p>顯示最近座標需至少三題有效作答，且兩軸各至少有兩題提供非零方向，讓每軸都由多題作答支持。</p><p>育兒教育、高齡長照、軌道交通、居住都更、科技產業、生態治理。每題政策選項可同時影響多軸，以下列出各題編碼可變動的幅度。</p><p>雷達圖以已作答的計分選項加總，各軸使用同一批題目的最低及最高可達分換算為 0–100。每軸至少需兩題可影響該軸的有效作答，才顯示分數。不計分選項不進入計算。</p><p></p><div id="quiz-axis-map"></div></details><section class="quiz-storage" aria-label="作答與保存"><p class="font-bold">作答與保存</p><label for="quiz-retention">保存期限</label> <select id="quiz-retention" onchange="setQuizRetention(this.value)"><option value="0">本次使用</option><option value="7">7 天</option><option value="30" selected>30 天</option></select> <button type="button" onclick="resetQuizAnswers()">清空測驗紀錄</button><p>可跳題，十題皆有選擇才顯示個人議題偏好。部分支持、沒有符合的方案與不確定都計入完成進度。這三種回答不影響座標與六軸分數。</p><p>十題答案與題號可存於此瀏覽器，保存期限從最近一次儲存起算。縣市對決保存在此分頁，關閉分頁後結束。共用裝置請先清除紀錄。作答程式未主動傳送答案。託管平台及第三方連線紀錄尚未核實。換網域後須重新作答。</p><p>清空測驗紀錄涵蓋十題與本分頁的縣市對決。<button type="button" class="underline" onclick="clearComparisonPins()">清除釘選候選人</button></p></section>
 
@@ -8806,7 +8830,7 @@
 
     const DUEL_STORAGE = 'policy_compass_duels_v1';
     let duelRounds = [], duelVotes = [], duelPaused = false;
-    let duelSelection = '', duelIssue = 'all', duelHistory = {};
+    let duelSelection = '', duelIssue = 'all', duelHistory = {}, duelPlaying = false;
     let duelAvailableIssues = [], duelMissingPairs = [], duelUpdated = false;
     let duelSummaryCount = 0, duelCandidateCount = 0;
 
@@ -8867,11 +8891,7 @@
     }
 
     function renderDuelCard(candidate, key) {
-      const text = policyDisplayText(duelCardText(candidate,key));
-      const points = text.split(/[；;]/).map(point => point.trim()).filter(Boolean);
-      return points.length > 1
-        ? '<span class="mt-2 block pl-5 space-y-1">' + points.map(point => '<span class="list-item list-disc">'+point+'</span>').join('') + '</span>'
-        : '<span class="mt-2 block">'+text+'</span>';
+      return '<span class="mt-2 block">'+policyDisplayText(duelCardText(candidate,key))+'</span>';
     }
 
     function renderDuelReview(candidate, key) {
@@ -9014,7 +9034,7 @@
       return rounds.filter((round, index) => fingerprints[index] === duelRoundFingerprint(round)).length;
     }
 
-    function startDuel(city, restart = false, moveFocus = false) {
+    function startDuel(city, restart = false) {
       duelSelection = city;
       duelIssue = document.getElementById('duel-issue').value;
       try {
@@ -9075,20 +9095,25 @@
           ? '（' + issueCounts[option.value] + ' 場）'
           : '');
       }
-      document.getElementById('duel-preview').textContent = city
-        ? people.length + ' 位候選人 · ' + duelRounds.length + ' 場 · 可選議題 ' + (duelAvailableIssues.map(([key]) => ISSUE_META[key].label).join('、') || '尚無') : '';
-      if (city) {
+      const preview = document.getElementById('duel-preview');
+      const coverageDetails = document.getElementById('duel-preview-coverage');
+      preview.hidden = coverageDetails.hidden = !duelRounds.length;
+      coverageDetails.open = false;
+      if (duelRounds.length) {
+        preview.textContent = duelRounds.length + ' 場' + (duelRounds.length > 7 ? ' · 每 7 場可休息' : '') + ' · 進度保留在此分頁';
         const coverage = people.map(candidate => duelRounds.filter(round => round.pair.includes(candidate)).length);
         const min = Math.min(...coverage), max = Math.max(...coverage);
         const scheduled = new Set(duelRounds.map(round => round.key));
         const issues = [...scheduled].map(key => ISSUE_META[key].label);
         const unsampled = duelIssue === 'all' ? duelAvailableIssues
           .filter(([key]) => !scheduled.has(key)).map(([key]) => ISSUE_META[key].label) : [];
-        document.getElementById('duel-preview').textContent += '。本輪涵蓋 ' + (issues.join('、') || '零項議題')
-          + '。每位候選人安排 ' + (min === max ? max : min + '–' + max) + ' 場。'
-          + (min !== max ? '部分候選人沒有共同議題可比較，出場機會不同。結果僅列逐場選擇與出場紀錄。' : '')
-          + (unsampled.length ? '綜合比較未抽到' + unsampled.join('、') + '，可改選這些議題單獨比較。' : '')
-          + (duelRounds.length > 7 ? '每七場提供分段休息。' : '');
+        if (min !== max) {
+          preview.textContent += '。每位候選人安排 ' + min + '–' + max + ' 場。'
+            + '部分候選人組合缺少共同議題，出場機會不同。結果僅列逐場選擇與出場紀錄。';
+        }
+        coverageDetails.querySelector('p').textContent = '本輪涵蓋 ' + issues.join('、') + '。'
+          + people.length + ' 位候選人' + (min === max ? '，每位安排 ' + max + ' 場。' : '。')
+          + (unsampled.length ? '綜合比較未抽到' + unsampled.join('、') + '，可改選這些議題單獨比較。' : '');
       }
       duelVotes = [];
       if (resume) {
@@ -9101,12 +9126,32 @@
       duelUpdated = !restart && Array.isArray(saved?.votes) && duelVotes.length < saved.votes.length;
       duelPaused = !restart && !duelUpdated && saved?.paused === true && duelAtBreak();
       if (restart) saveDuel();
-      renderDuel(moveFocus);
+      duelPlaying = restart;
+      renderDuel(restart);
+    }
+    function enterDuel() {
+      duelPlaying = true;
+      renderDuel();
+    }
+    function openDuelSetup() {
+      const details = document.getElementById('local-duel');
+      details.open = true;
+      focusDuelSection(document.getElementById('duel-city'), details.querySelector('summary'), true);
+    }
+    function focusDuelSection(target, section, align = false) {
+      target.focus({preventScroll:true});
+      const header = document.getElementById('global-header').getBoundingClientRect().bottom;
+      const {top, bottom} = section.getBoundingClientRect();
+      if (align || top < header || bottom > window.innerHeight) {
+        window.scrollBy({top: top - header - 8, behavior: 'instant'});
+      }
     }
     function switchDuelIssue(key) {
       const select = document.getElementById('duel-issue');
       select.value = key;
-      startDuel(duelSelection,false,true);
+      startDuel(duelSelection);
+      const start = document.getElementById('duel-start');
+      focusDuelSection(start, start);
     }
 
     function duelAtBreak() {
@@ -9122,7 +9167,7 @@
       renderDuel();
     }
     function restartDuel() {
-      if (window.confirm('清除本縣市與議題的作答後重新開始？')) startDuel(duelSelection,true,true);
+      if (window.confirm('清除本縣市與議題的作答後重新開始？')) startDuel(duelSelection,true);
     }
 
     function previousDuel() {
@@ -9138,6 +9183,8 @@
     }
     function renderDuel(moveFocus = true) {
       const el=document.getElementById('duel-play'), city=document.getElementById('duel-city').value;
+      const start = document.getElementById('duel-start');
+      start.hidden = !city || !duelRounds.length;
       if (!city || !duelRounds.length) {
         const reason = duelSummaryCount
           ? duelSummaryCount+'／'+duelCandidateCount+' 位候選人有已查證摘要，目前無共同對手可比較不同摘要。'
@@ -9147,10 +9194,21 @@
         return;
       }
       const round=duelRounds[duelVotes.length];
+      start.textContent = !round ? '查看對決結果' : duelVotes.length ? '繼續對決' : '開始對決';
+      if (!duelPlaying) {
+        el.innerHTML = '';
+        return;
+      }
+      let title, body;
+      const actions = [];
       if (duelPaused) {
-        el.innerHTML = '<h3 tabindex="-1" class="font-bold mt-4">本段已完成</h3><button type="button" class="rounded-lg border px-3 py-2" onclick="continueDuel()">繼續下一段</button>';
+        title = '已完成第 '+(duelVotes.length / 7)+' 段';
+        body = '<p>可以先休息，進度已保留在此分頁，重新整理後也可續答。</p>';
+        actions.push('<button type="button" class="rounded-lg border px-3 py-2" onclick="continueDuel()">繼續下一段</button>');
       } else if (round) {
-        el.innerHTML='<h3 tabindex="-1" class="font-bold mt-4">第 '+(duelVotes.length+1)+' / '+duelRounds.length+' 場 · '+ISSUE_META[round.key].label+'</h3><p>你會優先推動哪一項？</p><div class="grid sm:grid-cols-2 gap-2">'+round.pair.map((c,i)=>'<button type="button" class="text-left min-w-0 break-words rounded-xl border border-indigo-200 p-4 bg-white hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600" onclick="voteDuel('+i+')"><strong>方案 '+(i?'B':'A')+'</strong>'+renderDuelCard(c,round.key)+'</button>').join('')+'</div>';
+        title = '第 '+(duelVotes.length+1)+' / '+duelRounds.length+' 場 · '+ISSUE_META[round.key].label;
+        body = '<p>你會優先推動哪一項？</p><div class="grid sm:grid-cols-2 gap-2">'+round.pair.map((c,i)=>'<button type="button" class="text-left min-w-0 break-words rounded-xl border border-indigo-200 p-4 bg-white hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600" onclick="voteDuel('+i+')"><strong>方案 '+(i?'B':'A')+'</strong>'+renderDuelCard(c,round.key)+'</button>').join('')+'</div>';
+        actions.push('<button type="button" class="rounded-lg border px-3 py-2" onclick="voteDuel(null)">無法二選一，跳過本場</button>');
       } else {
         const stats=CANDIDATES.filter(c=>c.city===city).map(c=>({c,w:duelVotes.filter(id=>id===c.id).length,n:duelRounds.filter((r,i)=>duelVotes[i] !== null && r.pair.includes(c)).length}));
         const max=Math.max(...stats.map(s=>s.w));
@@ -9161,23 +9219,27 @@
         const single = effective === 1;
         const effectiveRound = single && duelVotes.findIndex(id => id !== null);
         const selected = single && stats.find(s => s.w === 1);
-        const heading = skipped === duelRounds.length ? '本輪所有場次均已跳過' : single ? '在' + ISSUE_META[duelRounds[effectiveRound].key].label + '議題，你選了 ' + name(selected.c) : balanced ? '有效比較 '+effective+' 場 · '+stats.filter(s=>s.w===max).map(s=>name(s.c)).join('、')+'（各選中 '+max+' 次）' : '本輪政策選擇紀錄';
+        title = skipped === duelRounds.length ? '本輪所有場次均已跳過' : single ? '在' + ISSUE_META[duelRounds[effectiveRound].key].label + '議題，你選了 ' + name(selected.c) : balanced ? '有效比較 '+effective+' 場 · '+stats.filter(s=>s.w===max).map(s=>name(s.c)).join('、')+'（各選中 '+max+' 次）' : '本輪政策選擇紀錄';
         const explanation = balanced ? '每位候選人出場次數相同，選中次數相同者並列。' : '請依逐場政策選擇與各人的有效出場次數解讀。無共同議題或已跳過的場次皆不計入。';
-        el.innerHTML='<h3 tabindex="-1" class="font-bold mt-4">'+heading+'</h3><p>'+explanation+'</p><p>完成 '+duelRounds.length+' 場，有效選擇 '+effective+' 場，跳過 '+skipped+' 場。以下出場次數只計入有選擇的場次。</p>'+stats.map(s=>name(s.c)+'：'+(s.n?s.w+' 次／出場 '+s.n+' 次':'沒有有效比較')).join('；')+'<details><summary>回看逐場選擇與來源</summary>'+duelRounds.map((r,i)=>'<p><strong>第 '+(i+1)+' 場 · '+ISSUE_META[r.key].label+(duelVotes[i]===null?'（已跳過）':'')+'</strong></p>'+r.pair.map(c=>'<div>'+name(c)+(duelVotes[i]===c.id?'（你的選擇）':'')+renderDuelReview(c,r.key)+'</div>').join('')).join('')+'</details><button onclick="restartDuel()">重新對決</button>';
-      }
-      if (!round) {
+        body = '<p>這是你的政策選擇紀錄，不是投票建議。'+explanation+'</p><p>完成 '+duelRounds.length+' 場，有效選擇 '+effective+' 場，跳過 '+skipped+' 場。以下出場次數只計入有選擇的場次。</p>'
+          + '<table class="duel-stats"><thead><tr><th scope="col">候選人</th><th scope="col">選中</th><th scope="col">有效出場</th></tr></thead><tbody>'
+          + stats.map(s=>'<tr><th scope="row">'+name(s.c)+'</th><td>'+s.w+'</td><td>'+s.n+'</td></tr>').join('')+'</tbody></table>'
+          + '<details><summary>回看逐場選擇與來源</summary>'+duelRounds.map((r,i)=>'<p><strong>第 '+(i+1)+' 場 · '+ISSUE_META[r.key].label+(duelVotes[i]===null?'（已跳過）':'')+'</strong></p>'+r.pair.map(c=>'<div>'+name(c)+(duelVotes[i]===c.id?'（你的選擇）':'')+renderDuelReview(c,r.key)+'</div>').join('')).join('')+'</details>';
         const issueTotals = Object.keys(ISSUE_META).map(key => {
           const count = duelRounds.filter(r => r.key === key).length;
           return count ? ISSUE_META[key].short+' '+count+' 場' : '';
         }).filter(Boolean);
-        el.insertAdjacentHTML('beforeend', '<details><summary>查看比較覆蓋範圍</summary><p>'+issueTotals.join('、')+'</p>' +
-          (duelMissingPairs.length ? '<p>未安排比較的組合</p><ul>'+duelMissingPairs.map(pair => '<li>'+pair.map(getDisplayName).join('與')+'</li>').join('')+'</ul>' : '')+'</details>');
+        body += '<details><summary>查看比較覆蓋範圍</summary><p>'+issueTotals.join('、')+'</p>' +
+          (duelMissingPairs.length ? '<p>未安排比較的組合</p><ul>'+duelMissingPairs.map(pair => '<li>'+pair.map(getDisplayName).join('與')+'</li>').join('')+'</ul>' : '')+'</details>';
+        actions.push('<button type="button" class="rounded-lg border px-3 py-2" onclick="restartDuel()">重新對決</button>');
       }
-      if (duelUpdated) el.insertAdjacentHTML('afterbegin', '<p role="status">題卡已更新，已保留更新前可沿用的作答。請從目前場次繼續。</p>');
-      if (round && !duelPaused) el.insertAdjacentHTML('beforeend', '<button type="button" class="mt-2 rounded-lg border px-3 py-2" onclick="voteDuel(null)">無法二選一，跳過本場</button><p class="text-xs mt-2">題卡使用本站整理的摘要。完成後可逐場查看摘要的核對狀態、已有的摘錄與公報入口。</p>');
-      el.insertAdjacentHTML('afterbegin', '<p class="mt-3">已完成 '+duelVotes.length+'／'+duelRounds.length+' 場</p><progress aria-label="對決進度" value="'+duelVotes.length+'" max="'+duelRounds.length+'"></progress>');
-      if (duelVotes.length) el.insertAdjacentHTML('beforeend', '<button type="button" class="rounded-lg border px-3 py-2" onclick="previousDuel()">回上一場修改</button>');
-      if (moveFocus) el.querySelector('h3')?.focus();
+      if (duelVotes.length) actions.push('<button type="button" class="rounded-lg border px-3 py-2" onclick="previousDuel()">回上一場修改</button>');
+      el.innerHTML = '<div class="mt-4"><h3 tabindex="-1" class="font-bold">'+title+'</h3>'
+        + '<p>已完成 '+duelVotes.length+'／'+duelRounds.length+' 場</p><progress class="duel-progress" aria-label="對決進度" value="'+duelVotes.length+'" max="'+duelRounds.length+'"></progress>'
+        + (duelUpdated ? '<p role="status">題卡已更新，已保留更新前可沿用的作答。請從目前場次繼續。</p>' : '')+'</div>'
+        + body + '<div class="duel-actions">'+actions.join('')+'</div>'
+        + (round && !duelPaused ? '<p class="text-xs mt-2">題卡使用本站整理的摘要。完成後可逐場查看摘要的核對狀態、已有的摘錄與公報入口。</p>' : '');
+      if (moveFocus) focusDuelSection(el.querySelector('h3'), el.firstElementChild);
     }
 
     function returnToQuizReview() {

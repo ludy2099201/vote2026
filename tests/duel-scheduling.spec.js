@@ -96,6 +96,7 @@ test('C05: exposure limitation appears before voting and the Taipei result remai
   await expect(preview).toContainText('每位候選人安排 2–5 場');
   await expect(preview).toContainText('出場機會不同');
   await expect(preview).toContainText('結果僅列逐場選擇與出場紀錄');
+  await page.getByRole('button', { name: '開始對決', exact: true }).click();
   for (let index = 0; index < 12; index++) {
     if (index === 7) await play.getByRole('button', { name: '繼續下一段' }).click();
     await play.getByRole('button', { name: /^方案 A/ }).click();
@@ -126,7 +127,9 @@ test('C06: absence of summaries, no common opponent, and an unsampled topic are 
   }
   await expect.soft(play).toContainText('缺少已查證摘要');
   await selectDuel(page, '新北市');
-  await expect(page.locator('#duel-preview')).toContainText('綜合比較未抽到');
+  await page.getByText('查看本輪涵蓋的議題', { exact: true }).click();
+  await expect(page.locator('#duel-preview-coverage p')).toBeVisible();
+  await expect(page.locator('#duel-preview-coverage p')).toContainText('綜合比較未抽到');
 });
 
 test('C07: spacing and punctuation variants of identical text never pair', async ({ page }) => {
@@ -172,10 +175,13 @@ for (const version of [1, 2]) {
     }, { historyKey, slate, version });
     await page.reload({ waitUntil: 'domcontentloaded' });
     const play = page.locator('#duel-play');
+    const resume = page.getByRole('button', { name: '繼續對決', exact: true });
+    await resume.click();
     await expect(play.getByRole('progressbar')).toHaveAttribute('value', '1');
     expect(await readSlate()).toEqual(slate);
     await selectDuel(page, '臺北市');
     await selectDuel(page, '新北市');
+    await resume.click();
     await expect(play.getByRole('heading')).toContainText('第 2 / 3 場');
     await play.getByRole('button', { name: /^方案 B/ }).click();
     await play.getByRole('button', { name: /^方案 B/ }).click();
@@ -185,6 +191,7 @@ for (const version of [1, 2]) {
     const saved = await page.evaluate(key => sessionStorage.getItem(key), historyKey);
     expect(JSON.parse(saved)['新北市/all']).toMatchObject({v: 2, votes: [0, 1, 1]});
     expect(saved).not.toMatch(/NTP-|slate|content/);
+    await page.getByRole('button', { name: '查看對決結果', exact: true }).click();
     page.once('dialog', dialog => dialog.accept());
     await play.getByRole('button', { name: '重新對決' }).click();
     await expect(play.getByRole('progressbar')).toHaveAttribute('value', '0');

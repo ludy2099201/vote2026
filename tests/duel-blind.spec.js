@@ -7,6 +7,14 @@ const toggle = '#btn-blind-toggle';
 const storageKey = 'policy_compass_duels_v1';
 const cards = (page) => page.locator(play + ' button[onclick="voteDuel(0)"], ' + play + ' button[onclick="voteDuel(1)"]');
 const heading = (page) => page.locator(play + ' h3');
+const enter = (page, name = '開始對決') => page.getByRole('button', { name, exact: true }).click();
+
+async function expectAttribution(page, counts) {
+  for (const [name, wins, appearances] of counts) {
+    const row = page.locator(play).getByRole('row').filter({ has: page.getByRole('rowheader', { name, exact: true }) });
+    await expect(row.getByRole('cell')).toHaveText([String(wins), String(appearances)]);
+  }
+}
 
 async function setup(page, city, issue = 'all') {
   await page.goto('./#quiz', { waitUntil: 'domcontentloaded' });
@@ -15,6 +23,7 @@ async function setup(page, city, issue = 'all') {
   await page.locator(duel + ' > summary').click();
   await page.locator('#duel-issue').selectOption(issue);
   await page.locator('#duel-city').selectOption(city);
+  await enter(page);
   await expect(cards(page)).toHaveCount(2);
 }
 
@@ -85,7 +94,7 @@ test('mid-duel and result toggles preserve choice order, focus and correct revea
   await page.getByRole('button', { name: '無法二選一，跳過本場' }).click();
   for (const side of [1, 0, 0]) await cards(page).nth(side).click();
   await expect(heading(page)).toContainText('黃世杰');
-  await expect(page.locator(play)).toContainText('黃世杰：4 次／出場 5 次；張善政：1 次／出場 5 次');
+  await expectAttribution(page, [['黃世杰', 4, 5], ['張善政', 1, 5]]);
   await setBlind(page, true);
   await expectMasked(page, 'btn-blind-toggle');
   await expect(heading(page)).toContainText('匿名候選人');
@@ -95,7 +104,7 @@ test('mid-duel and result toggles preserve choice order, focus and correct revea
   await expect(review.locator('div').filter({ hasText: '你的選擇' })).toHaveCount(5);
   await expect(review.locator('a')).toHaveCount(0);
   await setBlind(page, false);
-  await expect(page.locator(play)).toContainText('黃世杰：4 次／出場 5 次；張善政：1 次／出場 5 次');
+  await expectAttribution(page, [['黃世杰', 4, 5], ['張善政', 1, 5]]);
   await expect(review.locator('div').filter({ hasText: /黃世杰（你的選擇）/ })).toHaveCount(4);
   await expect(review.locator('div').filter({ hasText: /張善政（你的選擇）/ })).toHaveCount(1);
 });
@@ -149,11 +158,13 @@ test('BLIND-01: reload mid-duel and on results keeps blind enabled while preserv
   await setBlind(page, true);
   await cards(page).first().click();
   await page.reload({ waitUntil: 'domcontentloaded' });
+  await enter(page, '繼續對決');
   await expect(heading(page)).toContainText('第 2 / 6 場');
   await save(page, 'reload-mid', page.locator(duel));
   await expect.soft(page.locator(toggle)).toHaveAttribute('aria-pressed', 'true', { timeout: 1000 });
   for (const side of [1, 0, 1, 0, 0]) await cards(page).nth(side).click();
   await page.reload({ waitUntil: 'domcontentloaded' });
+  await enter(page, '查看對決結果');
   await expect(page.locator(play)).toContainText('完成 6 場，有效選擇 6 場');
   await save(page, 'reload-results', page.locator(duel));
   await expect(page.locator(toggle)).toHaveAttribute('aria-pressed', 'true', { timeout: 1000 });
@@ -161,8 +172,9 @@ test('BLIND-01: reload mid-duel and on results keeps blind enabled while preserv
   await expect(page.locator(play)).not.toContainText(/黃世杰|張善政/);
   await expect(page.locator('#roster-illustration')).toBeHidden();
   await setBlind(page, false);
-  await expect(page.locator(play)).toContainText('黃世杰：5 次／出場 6 次；張善政：1 次／出場 6 次');
+  await expectAttribution(page, [['黃世杰', 5, 6], ['張善政', 1, 6]]);
   await page.reload({ waitUntil: 'domcontentloaded' });
+  await enter(page, '查看對決結果');
   await expect(page.locator(toggle)).toHaveAttribute('aria-pressed', 'false');
   await expect(heading(page)).toContainText('黃世杰');
 });
@@ -199,6 +211,7 @@ test('BLIND-03: blind storage contains no candidate IDs or card snapshots', asyn
   expect(entry).not.toHaveProperty('content');
   expect(entry).not.toHaveProperty('slate');
   await page.reload({ waitUntil: 'domcontentloaded' });
+  await enter(page, '繼續對決');
   await expect(heading(page)).toContainText('第 3 / 6 場');
   await expect(page.locator(toggle)).toHaveAttribute('aria-pressed', 'true');
 });
