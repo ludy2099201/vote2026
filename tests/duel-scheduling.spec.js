@@ -198,3 +198,22 @@ for (const version of [1, 2]) {
     expect(await readSlate()).not.toEqual(slate);
   });
 }
+
+test('resume keeps a verified choice when the legacy schedule only matches more unanswered rounds', async ({ page }) => {
+  await openDuel(page);
+  await selectDuel(page, '臺北市');
+  await page.getByRole('button', { name: '開始對決', exact: true }).click();
+  const play = page.locator('#duel-play');
+  await play.getByRole('button', { name: /^方案 A/ }).click();
+  const before = await page.evaluate(() => {
+    const [first, second] = ['TPE-1', 'TPE-2'].map(id => CANDIDATES.find(candidate => candidate.id === id));
+    // A revised senior summary changes later matchups, while the first choice is still verifiable.
+    second.issues.senior = first.issues.senior;
+    return duelVotes[0];
+  });
+  await selectDuel(page, '新北市');
+  await selectDuel(page, '臺北市');
+  await page.locator('#duel-start').click();
+  await expect(play.getByRole('progressbar')).toHaveAttribute('value', '1', { timeout: 2000 });
+  expect(await page.evaluate(() => duelVotes)).toEqual([before]);
+});

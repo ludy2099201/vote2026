@@ -9034,6 +9034,16 @@
       return rounds.filter((round, index) => fingerprints[index] === duelRoundFingerprint(round)).length;
     }
 
+    function restoreDuelVotes(rounds, saved) {
+      const votes = [];
+      for (const [index, side] of saved.votes.entries()) {
+        const round = rounds[index];
+        if (!round || saved.rounds[index] !== duelRoundFingerprint(round) || (side !== null && side !== 0 && side !== 1)) break;
+        votes.push(side === null ? null : round.pair[side].id);
+      }
+      return votes;
+    }
+
     function startDuel(city, restart = false) {
       duelSelection = city;
       duelIssue = document.getElementById('duel-issue').value;
@@ -9082,11 +9092,22 @@
         ? assignDuelTopics(matches, issueKeys)
         : matches.flatMap(({pair, keys}) => keys.map(key => ({pair, key})));
       balanceDuelSides(duelRounds, people);
+      duelVotes = [];
       if (resume) {
         const legacy = legacyDuelRounds(legacyMatches, people, issueKeys);
-        const legacyMatchCount = matchingDuelRounds(legacy, saved.rounds);
-        // A tie can come from an older entry that only stored the shared prefix.
-        if (legacyMatchCount > 0 && legacyMatchCount >= matchingDuelRounds(duelRounds, saved.rounds)) duelRounds = legacy;
+        const legacyVotes = restoreDuelVotes(legacy, saved);
+        duelVotes = restoreDuelVotes(duelRounds, saved);
+        // Preserve verified progress first. Use slate fingerprints to break ties.
+        // Older entries may only store the shared prefix, so prefer legacy on a positive tie.
+        let useLegacy = legacyVotes.length > duelVotes.length;
+        if (legacyVotes.length === duelVotes.length) {
+          const legacyMatchCount = matchingDuelRounds(legacy, saved.rounds);
+          useLegacy = legacyMatchCount > 0 && legacyMatchCount >= matchingDuelRounds(duelRounds, saved.rounds);
+        }
+        if (useLegacy) {
+          duelRounds = legacy;
+          duelVotes = legacyVotes;
+        }
       }
       duelMissingPairs = missingPairs.filter(([a,b]) => !duelRounds.some(({pair}) => pair.includes(a) && pair.includes(b)));
       for (const option of document.getElementById('duel-issue').options) {
@@ -9114,14 +9135,6 @@
         coverageDetails.querySelector('p').textContent = '本輪涵蓋 ' + issues.join('、') + '。'
           + people.length + ' 位候選人' + (min === max ? '，每位安排 ' + max + ' 場。' : '。')
           + (unsampled.length ? '綜合比較未抽到' + unsampled.join('、') + '，可改選這些議題單獨比較。' : '');
-      }
-      duelVotes = [];
-      if (resume) {
-        for (const [index, side] of saved.votes.entries()) {
-          const round = duelRounds[index];
-          if (!round || saved.rounds[index] !== duelRoundFingerprint(round) || (side !== null && side !== 0 && side !== 1)) break;
-          duelVotes.push(side === null ? null : round.pair[side].id);
-        }
       }
       duelUpdated = !restart && Array.isArray(saved?.votes) && duelVotes.length < saved.votes.length;
       duelPaused = !restart && !duelUpdated && saved?.paused === true && duelAtBreak();
