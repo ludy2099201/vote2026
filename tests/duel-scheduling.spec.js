@@ -149,7 +149,7 @@ test('C07: spacing and punctuation variants of identical text never pair', async
         statuses: people.map(candidate => policyRecord(candidate, key).status),
       };
     };
-    return [run(text), run(text + '　 '), run(' 補助   1.5 萬元, 擴大長青卡; 增設日照中心 '), run(text.replace('1.5', '15'))];
+    return [run(text), run(text + '　 '), run(' 補助   1.5 萬元, 擴大　長 青卡; 增設日照中心 '), run(text.replace('1.5', '15'))];
   });
   expect(result.map(entry => entry.statuses)).toEqual(Array(4).fill(Array(2).fill('已有查證摘要・逐條引文待補')));
   expect(result.map(entry => entry.paired)).toEqual([false, false, false, true]);
