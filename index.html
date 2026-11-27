@@ -8799,14 +8799,50 @@
       return duelRounds.map(round => [round.key, ...round.pair.map(c => c.id)]);
     }
 
-    const TAOYUAN_TRANSIT_BULLETIN = 'https://bulletin.cec.gov.tw/01%E9%81%B8%E8%88%89%E5%85%AC%E5%A0%B1/03%E7%9B%B4%E8%BD%84%E5%B8%82%E9%95%B7/115%E5%B9%B4/%E6%A1%83%E5%9C%92%E5%B8%82%E5%B8%82%E9%95%B7.pdf';
-    const TAOYUAN_TRANSIT_CARDS = {
-      'TYN-1': { heading: '交通新治理 路網大翻新', summary: '推動捷運路網建設；強化交通路網接駁。' },
-      'TYN-2': { heading: '軌道齊發，城市再造', summary: '推動捷運路網擴建；整合幹線公車與桃小巴接駁。' }
+    const DUEL_CARD_SOURCES = {
+      'TYN-1': { transit: {
+        page: 1, heading: '交通新治理 路網大翻新',
+        quote: '捷運軌道建設加速，進度要透明。強化銜接路網，未來市府轉型升格為公共運輸總規劃師，讓公車不脫班，提升大眾運輸使用率。',
+        summary: '加快捷運建設並公開工程進度；由市府統籌公共運輸，改善路網轉乘與公車脫班。'
+      } },
+      'TYN-2': { transit: {
+        page: 1, heading: '軌道齊發，城市再造',
+        quote: '力拚綠線北段七站年底通車，推動「1環3心，8線齊發」捷運路網，結合幹線公車與桃小巴深入巷弄。以軌道帶動站區開發、舊城再生與生活圈重組，打造人本宜居城市。',
+        summary: '推動捷運路網擴建，以捷運綠線北段七站年底通車為目標；整合幹線公車與桃小巴，改善鄰里接駁。'
+      } },
+      'YUN-4': { governance: {
+        page: 1, quote: '一、司法改革黨：司法同議\n二、文化復興黨：同舞',
+        summary: '列出司法與文化方向，未說明執行措施。',
+        exclusionReason: '只有方向，缺少可比較的治理措施。'
+      } },
+      'KIN-1': { housing: {
+        page: 1, quote: '全面活化閒置營區，變成青年返鄉的舞台。',
+        summary: '提出利用閒置營區支持青年返鄉發展。',
+        exclusionReason: '未說明營區將提供住宅或其他居住措施。'
+      } },
+      'KIN-3': { housing: {
+        page: 1, quote: '宜居永續－穩健推動城鄉建設與環境保護',
+        summary: '提出推動城鄉建設與環境保護。',
+        exclusionReason: '未提出可比較的住宅或都更措施。'
+      } },
+      'KIN-4': { governance: {
+        page: 1, quote: '宣誓縣長任期四年屆滿後不再競選連任；任內縣長薪資及依法得自行處分之相關所得，全數捐作縣政智庫專款專用。',
+        summary: '提出以依法可捐助的收入作為縣政智庫的專用經費。'
+      } },
+      'KIN-6': { housing: {
+        page: 1, quote: '打造共生聚落，令長輩不再孤獨',
+        summary: '提出設立共生聚落，減少長者的孤立。',
+        exclusionReason: '未說明聚落如何提供住宅或改善居住條件。'
+      } },
+      'KIN-7': { governance: {
+        page: 2, quote: '讓金門換個樣子，給家鄉不一樣。',
+        summary: '提出地方改變的願景，未說明執行措施。',
+        exclusionReason: '只有願景，缺少可比較的治理措施。'
+      } }
     };
 
     function duelCardSource(candidate, key) {
-      return key === 'transit' ? TAOYUAN_TRANSIT_CARDS[candidate.id] : undefined;
+      return DUEL_CARD_SOURCES[candidate.id]?.[key];
     }
 
     function duelCardText(candidate, key) {
@@ -8825,8 +8861,20 @@
       if (state.blindMode) return renderDuelCard(candidate,key);
       const source = duelCardSource(candidate,key);
       if (!source) return renderPolicyEvidence(candidate,key);
-      return renderDuelCard(candidate,key) + '<details><summary>公報來源</summary><p>選舉公報政見標題「'+source.heading+'」</p>'
-        + '<p>對照狀態：已對照公報所載交通主張。題卡為摘要，PDF 頁碼待補。</p><a href="'+TAOYUAN_TRANSIT_BULLETIN+'" target="_blank" rel="noopener noreferrer">桃園市選舉公報 PDF</a></details>';
+      return renderDuelCard(candidate,key) + '<details><summary>公報來源</summary>'
+        + (source.heading ? '<p>選舉公報政見標題「'+source.heading+'」</p>' : '')
+        + '<blockquote class="whitespace-pre-line">'+source.quote+'</blockquote><a href="'+candidate.pdfUrl+'#page='+source.page
+        + '" target="_blank" rel="noopener noreferrer">'+candidate.city+'選舉公報 PDF 第 '+source.page+' 頁</a></details>';
+    }
+
+    function renderExcludedDuelCards(city, issue) {
+      if (state.blindMode) return '';
+      const keys = issue === 'all' ? Object.keys(ISSUE_META) : [issue];
+      const cards = CANDIDATES.filter(c => c.city === city).flatMap(c => keys.flatMap(key => {
+        const reason = duelCardSource(c,key)?.exclusionReason;
+        return reason ? ['<li>'+getDisplayName(c)+' · '+ISSUE_META[key].label+'：'+reason+renderDuelReview(c,key)+'</li>'] : [];
+      }));
+      return cards.length ? '<p>未納入對決的資料</p><ul>'+cards.join('')+'</ul>' : '';
     }
 
     function duelContent() {
@@ -8851,7 +8899,8 @@
       duelPaused = false;
       const people = CANDIDATES.filter(c => c.city === city);
       const issueUse = {};
-      const eligible = (candidate, key) => ['有原始來源','已有查證摘要・逐條引文待補'].includes(policyRecord(candidate,key).status);
+      const eligible = (candidate, key) => !duelCardSource(candidate,key)?.exclusionReason
+        && ['有原始來源','已有查證摘要・逐條引文待補'].includes(policyRecord(candidate,key).status);
       const issueCounts = Object.fromEntries(Object.keys(ISSUE_META).map(key => [key, 0]));
       const missingPairs = [];
       const eligibleKeysByRound = [];
@@ -8958,6 +9007,8 @@
       if (!city || !duelRounds.length) {
         el.innerHTML = city ? '<p>目前摘要不足以在 '+city+' 安排「'+(ISSUE_META[duelIssue]?.label || '綜合比較')+'」對決。</p>' +
           (duelAvailableIssues.length ? '<p>改選有題目的議題</p><div class="flex flex-wrap gap-2">' + duelAvailableIssues.map(([key,count]) => '<button type="button" class="min-h-[44px] rounded-lg border px-3 py-2" onclick="switchDuelIssue(this.value)" value="'+key+'">'+ISSUE_META[key].label+'（'+count+' 場）</button>').join('')+'</div>' : '<p>請從上方縣市選單改選地區。</p>') : '';
+        const excluded = renderExcludedDuelCards(city, duelIssue);
+        if (excluded) el.insertAdjacentHTML('beforeend', '<details><summary>查看比較覆蓋範圍</summary>'+excluded+'</details>');
         return;
       }
       const round=duelRounds[duelVotes.length];
@@ -8985,7 +9036,8 @@
           return count ? ISSUE_META[key].short+' '+count+' 場' : '';
         }).filter(Boolean);
         el.insertAdjacentHTML('beforeend', '<details><summary>查看比較覆蓋範圍</summary><p>'+issueTotals.join('、')+'</p>' +
-          (duelMissingPairs.length ? '<p>未安排比較的組合</p><ul>'+duelMissingPairs.map(pair => '<li>'+pair.map(getDisplayName).join('與')+'</li>').join('')+'</ul>' : '')+'</details>');
+          (duelMissingPairs.length ? '<p>未安排比較的組合</p><ul>'+duelMissingPairs.map(pair => '<li>'+pair.map(getDisplayName).join('與')+'</li>').join('')+'</ul>' : '')
+          + renderExcludedDuelCards(city, duelIssue)+'</details>');
       }
       if (duelUpdated) el.insertAdjacentHTML('afterbegin', '<p role="status">題卡已更新，已保留更新前可沿用的作答。請從目前場次繼續。</p>');
       if (round && !duelPaused) el.insertAdjacentHTML('beforeend', '<button type="button" class="mt-2 rounded-lg border px-3 py-2" onclick="voteDuel(null)">無法二選一，跳過本場</button><p class="text-xs mt-2">題卡使用本站整理的摘要。完成後可逐場查看摘要的核對狀態、已有的摘錄與公報入口。</p>');
