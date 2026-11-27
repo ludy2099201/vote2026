@@ -35,7 +35,7 @@ test('FLOW-02: pending break survives reload and switching county or topic', asy
   if (await button(page, next).isVisible()) await button(page, next).click();
   await page.reload();
   await enter(page, '繼續對決');
-  await expect(heading(page)).toContainText('第 8 / 21 場');
+  await expect(heading(page)).toContainText('第 8 / 15 場');
   for (let i = 7; i < 14; i++) await button(page, skip).click();
   await expect(heading(page)).toHaveText('已完成第 2 段');
   await page.locator('#duel-city').selectOption('新北市');
@@ -45,7 +45,7 @@ test('FLOW-02: pending break survives reload and switching county or topic', asy
   await shot(page, 'break-county');
   await expect.soft(heading(page)).toHaveText('已完成第 2 段', { timeout: 1000 });
   await button(page, back).click();
-  await expect(heading(page)).toContainText('第 14 / 21 場');
+  await expect(heading(page)).toContainText('第 14 / 15 場');
   await button(page, skip).click();
   await page.locator('#duel-issue').selectOption('governance');
   await page.locator('#duel-issue').selectOption('all');
@@ -81,8 +81,15 @@ test('FLOW-04: legacy ballots without a snapshot must be re-answered', async ({ 
   await expect(play(page).getByRole('status')).toHaveCount(0);
 });
 
-test('verified v1 ballots still resume and migrate without losing attribution', async ({ page }) => {
+test('v1 ballots that contain the old Taoyuan transit cards must be re-answered', async ({ page }) => {
   await seedLegacy(page, [['推動捷運路網建設；強化交通路網接駁。', '推動捷運路網擴建；整合幹線公車與桃小巴接駁。']]);
+  await enter(page);
+  await expect(progress(page)).toHaveAttribute('value', '0');
+  await expect(play(page).getByRole('status')).toContainText('題卡已更新');
+});
+
+test('verified v1 ballots still resume and migrate without losing attribution', async ({ page }) => {
+  await seedLegacy(page, [['加快捷運建設並公開工程進度；由市府統籌公共運輸，改善路網轉乘與公車脫班。', '推動捷運路網擴建，以捷運綠線北段七站年底通車為目標；整合幹線公車與桃小巴，改善鄰里接駁。']]);
   await enter(page, '查看對決結果');
   await expect(progress(page)).toHaveAttribute('value', '1');
   await expect(heading(page)).toContainText('黃世杰');

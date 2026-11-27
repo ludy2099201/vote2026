@@ -57,7 +57,8 @@ test('FLOW-03: maximize topic coverage, then minimize squared counts', async ({ 
       for (const [i, a] of people.entries()) {
         for (const b of people.slice(i + 1)) {
           const eligible = keys.flatMap((key, index) => [a, b].every(candidate =>
-            ['有原始來源', '已有查證摘要・逐條引文待補'].includes(policyRecord(candidate, key).status)
+            !duelCardSource(candidate, key)?.exclusionReason
+            && ['有原始來源', '已有查證摘要・逐條引文待補'].includes(policyRecord(candidate, key).status)
           ) && duelCardText(a, key) !== duelCardText(b, key) ? [index] : []);
           if (eligible.length) eligiblePairs.push({ a, b, eligible });
         }

@@ -13,6 +13,7 @@ const city = page => page.locator('#duel-city');
 const start = page => page.getByRole('button', { name: '開始對決', exact: true });
 const bar = page => page.getByRole('progressbar', { name: '對決進度' });
 const activate = (target, touch) => touch ? target.tap() : target.click();
+const kinmenRounds = 15;
 
 async function shot(page, stage) {
   if (!process.env.DUEL_UX_ARTIFACTS) return;
@@ -41,7 +42,7 @@ async function open(page, county, touch, keyboard = false) {
 async function progressInView(page, count) {
   await expect(heading(page)).toBeFocused();
   await expect(bar(page)).toHaveAttribute('value', String(count));
-  const progress = page.locator(play).getByText(`已完成 ${count}／21 場`, { exact: true });
+  const progress = page.locator(play).getByText(`已完成 ${count}／${kinmenRounds} 場`, { exact: true });
   await expect(progress).toBeVisible();
   const covered = await Promise.all([progress, bar(page), heading(page)].map(item => item.evaluate(el => {
     const rect = el.getBoundingClientRect();
@@ -112,7 +113,7 @@ test('duel setup, round progress, pause, result and review', async ({ page }, in
     await activate(page.getByRole('button', { name: '繼續對決', exact: true }), touch);
     await progressInView(page, 1);
   }
-  for (let done = 2; done <= 21; done++) {
+  for (let done = 2; done <= kinmenRounds; done++) {
     await activate(cards(page).nth(done % 2), touch);
     await progressInView(page, done);
     if (done === 7 || done === 14) {
@@ -129,7 +130,7 @@ test('duel setup, round progress, pause, result and review', async ({ page }, in
   }
   await shot(page, 'result');
   const result = page.locator(play);
-  await expect(result.getByText(/完成 21 場，有效選擇 20 場，跳過 1 場/)).toBeVisible();
+  await expect(result.getByText(`完成 ${kinmenRounds} 場，有效選擇 ${kinmenRounds - 1} 場，跳過 1 場。`, { exact: false })).toBeVisible();
   const table = result.getByRole('table');
   expect.soft(await table.getByRole('columnheader', { name: '選中', exact: true }).count(), 'UX-06: selected count column').toBe(1);
   expect.soft(await table.getByRole('columnheader', { name: '有效出場', exact: true }).count(), 'UX-06: appearance count column').toBe(1);
@@ -137,8 +138,8 @@ test('duel setup, round progress, pause, result and review', async ({ page }, in
   expect.soft(rows.length, 'UX-06: one row for each candidate').toBe(7);
   const totals = await Promise.all(rows.map(async row => (await row.getByRole('cell').allTextContents()).map(Number)));
   if (rows.length) {
-    expect(totals.reduce((sum, [wins]) => sum + wins, 0)).toBe(20);
-    expect(totals.reduce((sum, [, appearances]) => sum + appearances, 0)).toBe(40);
+    expect(totals.reduce((sum, [wins]) => sum + wins, 0)).toBe(kinmenRounds - 1);
+    expect(totals.reduce((sum, [, appearances]) => sum + appearances, 0)).toBe(2 * (kinmenRounds - 1));
   }
   await largeTargets(result.locator('summary, button'));
   await audit(page, 'result');
