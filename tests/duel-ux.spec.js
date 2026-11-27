@@ -154,8 +154,9 @@ test('duel setup, round progress, pause, result and review', async ({ page }, in
 test('duel renders policy separators in the visible text and button name', async ({ page }, info) => {
   const touch = info.project.name === 'mobile';
   await open(page, '彰化縣', touch);
+  await page.locator('#duel-issue').selectOption('childcare');
   if (await start(page).count()) await activate(start(page), touch);
-  const card = cards(page).nth(1);
+  const card = cards(page).filter({ hasText: '托育津貼' });
   await card.scrollIntoViewIfNeeded();
   await shot(page, 'card');
   const separator = /8萬元；\s*托育津貼/;
